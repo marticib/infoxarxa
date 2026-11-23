@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ca">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta
+      name="description"
+      content="Dossier interactiu per aprendre JavaScript des de zero: variables, condicionals, bucles, funcions, DOM, esdeveniments i un projecte final."
+    />
+    <title>JavaScript des de zero · Dossier interactiu RA2</title>
+    <script>
+      // Aplica el tema abans de pintar la pàgina per evitar un flaix de color.
+      (function () {
+        var tema = 'light';
+        try {
+          var desat = localStorage.getItem('ra2js:theme');
+          if (desat === 'light' || desat === 'dark') {
+            tema = desat;
+          } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            tema = 'dark';
+          }
+        } catch (error) {
+          /* localStorage no disponible: ens quedem amb el tema clar */
+        }
+        document.documentElement.dataset.theme = tema;
+        // Color de la barra del navegador en mòbil, a joc amb el tema.
+        if (tema === 'dark') {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0c0e13');
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

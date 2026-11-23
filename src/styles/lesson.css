@@ -1,0 +1,964 @@
+/* Pàgina de lliçó, portada i pàgines de consulta. */
+
+/* ---------- Capçalera de la unitat ---------- */
+
+.lesson,
+.page {
+  min-width: 0;
+}
+
+.lesson__header {
+  display: grid;
+  gap: 0.75rem;
+  justify-items: start;
+  margin-bottom: 1.75rem;
+}
+
+.lesson__eyebrow,
+.hero__eyebrow,
+.home__kicker {
+  color: var(--primary);
+}
+
+.lesson__title {
+  font-size: clamp(2rem, 1.5rem + 2.4vw, 2.85rem);
+  font-weight: 720;
+  line-height: 1.08;
+  letter-spacing: -0.032em;
+}
+
+.lesson__lead,
+.hero__lead {
+  max-width: 40rem;
+  font-size: 1.15rem;
+  line-height: 1.6;
+  color: var(--text-muted);
+  text-wrap: pretty;
+}
+
+.lesson__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 1.1rem;
+  margin-top: 0.35rem;
+}
+
+.lesson__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 1.1rem;
+  padding: 0;
+  font-size: 0.83rem;
+  color: var(--text-muted);
+  list-style: none;
+}
+
+.lesson__stats li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* ---------- Apartats ---------- */
+
+.section {
+  display: grid;
+  gap: 1.15rem;
+  min-width: 0;
+  margin-top: 3.5rem;
+  padding-top: 2.5rem;
+  font-size: 1.0625rem;
+  line-height: 1.72;
+  border-top: 1px solid var(--border);
+}
+
+.section > p,
+.callout__body > p,
+.card > p {
+  text-wrap: pretty;
+}
+
+/* Els fills d'una graella no s'han d'eixamplar més que la columna de lectura */
+.section > *,
+.card > *,
+.callout > *,
+.callout__body > *,
+.special > * {
+  min-width: 0;
+}
+
+.section__label {
+  margin-bottom: -0.65rem;
+  color: var(--primary);
+}
+
+.section__head {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.section__title {
+  font-size: clamp(1.5rem, 1.3rem + 1vw, 1.85rem);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.026em;
+}
+
+.section__anchor {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  color: var(--text-faint);
+  border-radius: var(--radius-xs);
+  opacity: 0;
+  transition: opacity var(--fast), color var(--fast), background-color var(--fast);
+}
+
+.section__head:hover .section__anchor,
+.section__anchor:focus-visible {
+  opacity: 1;
+}
+
+.section__anchor:hover {
+  color: var(--primary);
+  background: var(--primary-soft);
+}
+
+@media (hover: none) {
+  .section__anchor {
+    opacity: 1;
+  }
+}
+
+.lesson-subtitle {
+  margin-top: 1rem;
+  font-size: 1.2rem;
+  font-weight: 650;
+  letter-spacing: -0.018em;
+}
+
+.lesson-list {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.lesson-list li::marker {
+  font-weight: 650;
+  color: var(--primary);
+}
+
+/* ---------- El punt de partida ---------- */
+
+.starting-point {
+  position: relative;
+  margin-top: 0;
+  padding: 1.5rem 1.15rem 1.25rem;
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--bg-subtle), var(--surface) 12rem);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-s);
+}
+
+.starting-point::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  content: "";
+  background: var(--gradient);
+}
+
+.starting-point__title {
+  font-size: clamp(1.35rem, 1.1rem + 1.3vw, 1.75rem);
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.024em;
+}
+
+.goals {
+  display: grid;
+  gap: 0.75rem;
+  padding-top: 1.15rem;
+  border-top: 1px solid var(--border);
+}
+
+.goals__title {
+  font-size: 0.95rem;
+  font-weight: 650;
+}
+
+.goals__list,
+.home__features {
+  display: grid;
+  gap: 0.55rem;
+  padding: 0;
+  font-size: 1rem;
+  line-height: 1.55;
+  list-style: none;
+}
+
+.goals__list li,
+.home__features li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+}
+
+.goals__check {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-top: 0.16rem;
+  color: var(--on-success);
+  background: var(--success-solid);
+  border-radius: 50%;
+}
+
+@media (min-width: 40rem) {
+  .starting-point {
+    padding: 1.9rem 1.75rem 1.75rem;
+  }
+}
+
+/* ---------- Resum ---------- */
+
+.summary {
+  display: grid;
+  gap: 0.6rem;
+  padding: 1.15rem 1.25rem 1.15rem 2.6rem;
+  font-size: 1rem;
+  line-height: 1.65;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+}
+
+.summary li::marker {
+  color: var(--primary);
+}
+
+/* ---------- Portada ---------- */
+
+.home {
+  container-type: inline-size;
+}
+
+.hero {
+  position: relative;
+  display: grid;
+  gap: 2rem;
+  align-items: center;
+  padding: 1.75rem 1.25rem;
+  overflow: hidden;
+  background: radial-gradient(60rem 26rem at 100% 0%, color-mix(in srgb, var(--primary-solid) 13%, transparent), transparent 60%),
+    var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+}
+
+/* Trama de punts que s'esvaeix: decoració pura */
+.hero::before {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  content: "";
+  background: radial-gradient(color-mix(in srgb, var(--text) 16%, transparent) 1px, transparent 1.4px) 0 0 / 22px 22px;
+  -webkit-mask-image: linear-gradient(120deg, transparent 35%, #000);
+  mask-image: linear-gradient(120deg, transparent 35%, #000);
+}
+
+.hero > * {
+  position: relative;
+  min-width: 0;
+}
+
+.hero__text {
+  display: grid;
+  gap: 0.95rem;
+  justify-items: start;
+}
+
+.hero__title {
+  font-size: clamp(2.3rem, 1.5rem + 3.6vw, 3.7rem);
+  font-weight: 740;
+  line-height: 1.04;
+  letter-spacing: -0.04em;
+}
+
+.hero__mark {
+  margin: 0 -0.12em;
+  padding: 0 0.12em;
+  background: linear-gradient(transparent 58%, var(--mark) 58%, var(--mark) 92%, transparent 92%);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+/* En fosc, el subratllat groc perdria contrast: el groc passa a ser el text */
+:root[data-theme="dark"] .hero__mark {
+  margin: 0;
+  padding: 0;
+  color: var(--brand);
+  background: none;
+}
+
+.hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+}
+
+.hero__actions .btn {
+  white-space: normal;
+}
+
+.hero__progress {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+
+/* Finestra de codi de mostra */
+.hero__window {
+  margin: 0;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-l);
+  box-shadow: var(--shadow-l);
+}
+
+.hero__window-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-height: 2.25rem;
+  padding: 0 0.9rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+
+.hero__code {
+  padding: 1rem 1.1rem;
+  overflow-x: auto;
+  font-size: 0.84rem;
+  line-height: 1.75;
+  color: var(--code-text);
+  background: var(--code-bg);
+}
+
+.hero__console {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.75rem 1.1rem 0.95rem;
+  border-top: 1px solid var(--border);
+}
+
+.hero__console-title {
+  margin-bottom: 0.25rem;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.hero__console-line {
+  display: flex;
+  gap: 0.6rem;
+  font-family: var(--font-mono);
+  font-size: 0.84rem;
+  line-height: 1.6;
+}
+
+.hero__prompt {
+  font-weight: 700;
+  color: var(--primary);
+}
+
+/* Xifres */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+  padding: 0;
+  list-style: none;
+}
+
+.stats__item {
+  display: grid;
+  gap: 0.15rem;
+  align-content: start;
+  padding: 1rem 1.1rem 1.05rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  box-shadow: var(--shadow-xs);
+}
+
+.stats__value {
+  font-size: 1.9rem;
+  font-weight: 720;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  letter-spacing: -0.035em;
+}
+
+.stats__label {
+  font-size: 0.84rem;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+/* Seccions de la portada */
+.home__section {
+  display: grid;
+  gap: 1.5rem;
+  min-width: 0;
+  margin-top: 4.5rem;
+  font-size: 1.0625rem;
+  line-height: 1.7;
+}
+
+.home__section > * {
+  min-width: 0;
+}
+
+.home__intro,
+.home__project-text {
+  display: grid;
+  gap: 0.7rem;
+  align-content: start;
+  max-width: 42rem;
+}
+
+.home__section h2 {
+  font-size: clamp(1.6rem, 1.3rem + 1.3vw, 2.15rem);
+  font-weight: 720;
+  letter-spacing: -0.03em;
+}
+
+.home__section p {
+  text-wrap: pretty;
+}
+
+.home__features {
+  margin-top: 0.4rem;
+}
+
+.home__project-demo {
+  min-width: 0;
+}
+
+/* Recorregut */
+.route {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0;
+  list-style: none;
+}
+
+.route__card {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  height: 100%;
+  padding: 1.05rem 1.1rem 1.1rem;
+  color: var(--text);
+  text-decoration: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-l);
+  box-shadow: var(--shadow-xs);
+  transition: border-color var(--fast), box-shadow var(--fast), transform var(--fast);
+}
+
+.route__card:hover {
+  color: var(--text);
+  border-color: var(--primary-border);
+  box-shadow: var(--shadow);
+  transform: translateY(-2px);
+}
+
+.route__number {
+  flex: none;
+  min-width: 2rem;
+  padding-top: 0.12rem;
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--text-faint);
+}
+
+.route__card--visited .route__number {
+  color: var(--primary);
+}
+
+.route__card--completed .route__number {
+  color: var(--success);
+}
+
+.route__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+  line-height: 1.4;
+}
+
+.route__title {
+  font-size: 1.05rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+
+.route__problem {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.route__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.95rem;
+  margin-top: 0.5rem;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.route__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-weight: 600;
+}
+
+.route__status--completed {
+  color: var(--success);
+}
+
+.route__status--visited {
+  color: var(--primary);
+}
+
+.route__arrow {
+  display: none;
+  align-self: center;
+  color: var(--primary);
+  opacity: 0;
+  transform: translateX(-6px);
+  transition: opacity var(--fast), transform var(--fast);
+}
+
+@media (hover: hover) {
+  .route__arrow {
+    display: block;
+  }
+
+  .route__card:hover .route__arrow,
+  .route__card:focus-visible .route__arrow {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Llegenda dels tipus de caixa */
+.legend {
+  display: grid;
+  gap: 0.6rem;
+  padding: 0;
+  list-style: none;
+}
+
+.legend__item {
+  --tone: var(--theory);
+  --tone-bg: var(--theory-bg);
+  --tone-border: var(--theory-border);
+
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 0.9rem 1rem 0.95rem;
+  font-size: 0.93rem;
+  line-height: 1.5;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+}
+
+.legend__item--example { --tone: var(--example); --tone-bg: var(--example-bg); --tone-border: var(--example-border); }
+.legend__item--warning { --tone: var(--warning); --tone-bg: var(--warning-bg); --tone-border: var(--warning-border); }
+.legend__item--error { --tone: var(--danger); --tone-bg: var(--danger-bg); --tone-border: var(--danger-border); }
+.legend__item--challenge { --tone: var(--challenge); --tone-bg: var(--challenge-bg); --tone-border: var(--challenge-border); }
+.legend__item--project { --tone: var(--project); --tone-bg: var(--project-bg); --tone-border: var(--project-border); }
+
+.legend__text {
+  color: var(--text-muted);
+}
+
+.legend__text strong {
+  color: var(--text);
+}
+
+.home__tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 1rem 1.15rem;
+  font-size: 0.98rem;
+  line-height: 1.65;
+  background: var(--bg-subtle);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-m);
+}
+
+.home__tip-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  color: var(--warning);
+  background: var(--warning-bg);
+  border: 1px solid var(--warning-border);
+  border-radius: 50%;
+}
+
+@container (min-width: 34rem) {
+  .hero {
+    padding: 2.5rem 2.25rem;
+  }
+
+  .legend {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container (min-width: 44rem) {
+  .stats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .route {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* L'última unitat (el projecte final) ocupa tota la fila */
+  .route > li:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+}
+
+@container (min-width: 54rem) {
+  .hero {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+    gap: 2.75rem;
+    padding: 3.25rem 3rem;
+  }
+
+  .home__project {
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+    gap: 2.5rem;
+    align-items: start;
+  }
+
+  .home__project-text {
+    position: sticky;
+    top: calc(var(--header-height) + 2rem);
+  }
+
+  .legend {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* ---------- Glossari ---------- */
+
+.page--wide {
+  container-type: inline-size;
+}
+
+.glossary-tools {
+  display: grid;
+  gap: 1.1rem;
+  margin-bottom: 2.25rem;
+}
+
+.glossary-tools .search {
+  max-width: 34rem;
+}
+
+.letters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.letters__btn {
+  min-width: 2.25rem;
+  height: 2.25rem;
+  padding: 0 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-s);
+  transition: background-color var(--fast), border-color var(--fast), color var(--fast);
+}
+
+.letters__btn:hover {
+  color: var(--primary);
+  background: var(--primary-soft);
+  border-color: var(--primary-border);
+}
+
+@media (pointer: coarse) {
+  .letters__btn {
+    min-width: 2.75rem;
+    height: 2.75rem;
+  }
+}
+
+.glossary-groups {
+  display: grid;
+  gap: 2.25rem;
+}
+
+.glossary-group {
+  display: grid;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.glossary-group__letter {
+  font-family: var(--font-mono);
+  font-size: 1.35rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0;
+  color: var(--primary);
+}
+
+@container (min-width: 48rem) {
+  .glossary-group {
+    grid-template-columns: 3rem minmax(0, 1fr);
+    gap: 1rem;
+    align-items: start;
+  }
+
+  .glossary-group__letter {
+    position: sticky;
+    top: calc(var(--header-height) + 1.25rem);
+    padding-top: 0.75rem;
+  }
+}
+
+@container (min-width: 60rem) {
+  .glossary-group .glossary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* ---------- Pàgina no trobada ---------- */
+
+.notfound {
+  display: grid;
+  gap: 1.25rem;
+  justify-items: start;
+  padding-top: 1rem;
+}
+
+.notfound .lesson__header {
+  margin-bottom: 0;
+}
+
+.notfound__code {
+  font-family: var(--font-mono);
+  font-size: clamp(4rem, 2rem + 12vw, 7.5rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.05em;
+  color: var(--border-control);
+}
+
+.notfound__message {
+  justify-self: stretch;
+}
+
+.notfound__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+/* ---------- El projecte final ---------- */
+
+/* Connexió de cada unitat amb el projecte final */
+.project-link {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+.project-link strong {
+  color: var(--text);
+}
+
+.project-link__icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 1.45rem;
+  height: 1.45rem;
+  margin-top: 0.08rem;
+  color: var(--on-primary);
+  background: var(--primary-solid);
+  border-radius: 50%;
+}
+
+.project-demo {
+  display: grid;
+  gap: 0.9rem;
+  min-width: 0;
+}
+
+.project-demo .special__toggle {
+  justify-self: start;
+}
+
+.home__note {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+/* ---------- Secció d'exercicis ---------- */
+
+.lesson__stats a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 600;
+}
+
+.levels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  margin-bottom: 1.75rem;
+  padding: 0;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  list-style: none;
+}
+
+.levels__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.levels .card__level {
+  margin-left: 0;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.topics {
+  margin-bottom: 2rem;
+}
+
+.topics__bar {
+  display: block;
+  height: 4px;
+  margin-top: 0.7rem;
+  overflow: hidden;
+  background: var(--surface-3);
+  border-radius: 999px;
+}
+
+.topics__fill {
+  display: block;
+  height: 100%;
+  background: var(--success-solid);
+  border-radius: inherit;
+  transition: width 240ms var(--ease);
+}
+
+/* Accés als temes des de la portada */
+.practice {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0;
+  list-style: none;
+}
+
+.practice__link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.9rem;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  color: var(--text);
+  text-decoration: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  transition: border-color var(--fast), background-color var(--fast);
+}
+
+.practice__link:hover {
+  color: var(--text);
+  background: var(--primary-soft);
+  border-color: var(--primary-border);
+}
+
+.practice__number,
+.practice__count {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--text-faint);
+}
+
+.practice__title {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+}
+
+.practice__count {
+  color: var(--text-muted);
+}
+
+@container (min-width: 34rem) {
+  .practice {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container (min-width: 60rem) {
+  .practice {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
