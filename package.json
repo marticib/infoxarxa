@@ -2,7 +2,7 @@
   "name": "dossier-javascript-ra2",
   "private": true,
   "version": "1.0.0",
-  "description": "Dossier interactiu per estudiar el RA2 d'introducció a JavaScript",
+  "description": "Dossiers interactius per estudiar HTML i CSS (RA1) i JavaScript (RA2)",
   "type": "module",
   "scripts": {
     "dev": "vite",

@@ -1,6 +1,7 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import Icon from '../ui/Icon.jsx';
 import { groupResults, KINDS, search, suggestions } from '../../lib/searchIndex.js';
+import { useCourse } from '../../state/CourseContext.jsx';
 
 // Cercador de tot el dossier (Ctrl/⌘ + K). Fa servir un <dialog> natiu, com
 // el diàleg de confirmació, i el patró «combobox + listbox»: el focus es queda
@@ -27,7 +28,11 @@ export default function SearchDialog({ open, onClose }) {
   }, [open]);
 
   const trimmed = query.trim();
-  const groups = useMemo(() => groupResults(trimmed ? search(trimmed) : suggestions()), [trimmed]);
+  const courseId = useCourse()?.id ?? null;
+  const groups = useMemo(
+    () => groupResults(trimmed ? search(trimmed, courseId) : suggestions(courseId)),
+    [trimmed, courseId]
+  );
   const flat = useMemo(() => groups.flatMap((group) => group.items), [groups]);
   const active = flat[Math.min(activeIndex, flat.length - 1)];
   const optionId = (entry) => `${baseId}-${entry.id}`;

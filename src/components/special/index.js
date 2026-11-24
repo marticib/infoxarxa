@@ -6,6 +6,9 @@ import DomTree from './DomTree.jsx';
 import EventInspector from './EventInspector.jsx';
 import ProjectChecklist from './ProjectChecklist.jsx';
 import ProjectDemo from './ProjectDemo.jsx';
+import BoxSketch from './BoxSketch.jsx';
+import CssPlayground from './CssPlayground.jsx';
+import PageDemo from './PageDemo.jsx';
 
 // Components amb maquetació pròpia. El contingut els demana pel nom:
 //   custom('LoopTracer')
@@ -18,4 +21,7 @@ export const specialComponents = {
   EventInspector,
   ProjectChecklist,
   ProjectDemo,
+  BoxSketch,
+  CssPlayground,
+  PageDemo,
 };

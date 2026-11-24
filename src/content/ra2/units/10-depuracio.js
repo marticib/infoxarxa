@@ -1,4 +1,4 @@
-import { p, list, steps, code, example, concept, warning, project, table, compare } from '../blocks.js';
+import { p, list, steps, code, example, concept, warning, project, table, compare } from '../../blocks.js';
 
 const CSS_GESTOR = `label {
   display: block;

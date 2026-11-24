@@ -1,4 +1,4 @@
-import { p, list, code, example, concept, warning, challenge, project, table, compare, custom } from '../blocks.js';
+import { p, list, code, example, concept, warning, challenge, project, table, compare, custom } from '../../blocks.js';
 
 const TASQUES = `const tasques = [
   { id: 1, text: "Estudiar JavaScript", completada: false },

@@ -1,4 +1,4 @@
-import { p, list, example, concept, warning, challenge, project, table, custom } from '../blocks.js';
+import { p, list, example, concept, warning, challenge, project, table, custom } from '../../blocks.js';
 
 const CSS_TARGETA = `.targeta {
   margin-bottom: 8px;

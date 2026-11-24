@@ -55,7 +55,10 @@ export function ProjectStep({ title, text, code, lang = 'js' }) {
 }
 
 // Error habitual: codi incorrecte, missatge de la consola, explicació i correcció.
-export function CommonError({ title, bad, badLang = 'js', message, why, fix, fixLang = 'js' }) {
+//
+// Al dossier d'HTML i CSS no hi ha missatges d'error: el navegador no avisa,
+// simplement la pàgina no es veu com s'esperava. Per això hi ha `symptom`.
+export function CommonError({ title, bad, badLang = 'js', message, symptom, why, fix, fixLang = 'js' }) {
   const headingId = useId();
 
   return (
@@ -82,6 +85,13 @@ export function CommonError({ title, bad, badLang = 'js', message, why, fix, fix
           </span>
           <code>{message}</code>
         </p>
+      ) : null}
+
+      {symptom ? (
+        <div className="card__note">
+          <p className="card__note-title">Què es veu</p>
+          <Paragraphs text={symptom} />
+        </div>
       ) : null}
 
       <div className="card__note">

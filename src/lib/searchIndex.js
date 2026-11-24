@@ -1,12 +1,13 @@
-import { units } from '../content/index.js';
-import { glossary } from '../content/glossary.js';
-import { topics } from './exerciseBank.js';
-import { exercisesHref, glossaryHref, homeHref, unitHref } from './router.js';
+import { courses } from './courses.js';
+import { courseHref, exercisesHref, glossaryHref, portalHref, topicHref, unitHref } from './router.js';
 import { normalize, stripMarkup } from './text.js';
 
-// Cercador del dossier. L'índex es construeix una sola vegada a partir del
+// Cercador. L'índex de cada dossier es construeix una sola vegada a partir del
 // mateix contingut que es mostra: unitats, apartats, exemples, exercicis,
 // errors habituals i termes del glossari. Tot passa al navegador.
+//
+// Dins d'un dossier es cerca només en aquell dossier. A la portada general,
+// en tots, i cada resultat diu de quin és.
 
 // Qualsevol component pot demanar que s'obri el cercador (l'escolta Layout).
 export const SEARCH_EVENT = 'ra2js:obre-cercador';
@@ -30,14 +31,16 @@ const FIXED_SECTIONS = [
   { id: 'questionari', title: 'Qüestionari' },
 ];
 
-function buildIndex() {
+function buildIndex(course) {
   const entries = [];
+  const { units, topics, glossary } = course;
   // `matchTitle`: text amb què es compara el títol (per defecte, el mateix títol).
   const add = (kind, title, context, href, { anchor = null, extra = '', matchTitle } = {}) => {
     const cleanTitle = stripMarkup(title);
     const cleanContext = stripMarkup(context);
     entries.push({
-      id: `${kind}-${entries.length}`,
+      id: `${course.id}-${kind}-${entries.length}`,
+      course: course.id,
       kind,
       title: cleanTitle,
       context: cleanContext,
@@ -48,9 +51,11 @@ function buildIndex() {
     });
   };
 
-  add('page', 'Inici', 'Portada del dossier', homeHref);
-  add('page', 'Exercicis', 'Tots els exercicis, per temes i per nivell', exercisesHref(), { extra: 'practicar pràctica temes' });
-  add('page', 'Glossari', 'Totes les paraules clau, amb cercador', glossaryHref);
+  add('page', 'Inici', `Portada del dossier · ${course.title}`, courseHref(course.id), { extra: course.code });
+  add('page', 'Exercicis', 'Tots els exercicis, per temes i per nivell', exercisesHref(course.id), {
+    extra: 'practicar pràctica temes',
+  });
+  add('page', 'Glossari', 'Totes les paraules clau, amb cercador', glossaryHref(course.id));
 
   for (const unit of units) {
     const where = `Unitat ${unit.number} · ${unit.shortTitle ?? unit.title}`;
@@ -95,13 +100,13 @@ function buildIndex() {
 
   // Secció d'exercicis: una pàgina per tema i els exercicis que no són a cap unitat.
   for (const topic of topics) {
-    add('topic', `Exercicis: ${topic.title}`, `Tema ${topic.number} · ${topic.items.length} exercicis`, exercisesHref(topic.id), {
+    add('topic', `Exercicis: ${topic.title}`, `Tema ${topic.number} · ${topic.items.length} exercicis`, topicHref(topic.id), {
       extra: 'practicar tema',
       matchTitle: `exercicis ${topic.title}`,
     });
     for (const item of topic.items) {
       if (item.source !== 'extra') continue;
-      add('exercise', item.exercise.title, `Exercicis · Tema ${topic.number} · ${topic.title}`, exercisesHref(topic.id, item.exercise.id), {
+      add('exercise', item.exercise.title, `Exercicis · Tema ${topic.number} · ${topic.title}`, topicHref(topic.id, item.exercise.id), {
         anchor: `exercici-${item.exercise.id}`,
         extra: 'exercici extra',
       });
@@ -109,24 +114,42 @@ function buildIndex() {
   }
 
   for (const item of glossary) {
-    add('term', item.term, item.definition, glossaryHref + '/' + encodeURIComponent(item.term));
+    add('term', item.term, item.definition, glossaryHref(course.id, item.term));
   }
 
   return entries;
 }
 
-let cachedIndex = null;
-const getIndex = () => (cachedIndex ??= buildIndex());
+const cachedIndexes = new Map();
+
+function courseIndex(course) {
+  if (!cachedIndexes.has(course.id)) cachedIndexes.set(course.id, buildIndex(course));
+  return cachedIndexes.get(course.id);
+}
+
+// Sense dossier (portada general) es cerca a tots, i el context ho indica.
+let cachedAll = null;
+function getIndex(courseId) {
+  const course = courses.find((item) => item.id === courseId);
+  if (course) return courseIndex(course);
+  cachedAll ??= courses.flatMap((item) =>
+    courseIndex(item).map((entry) => ({
+      ...entry,
+      context: entry.context ? `${item.code} · ${entry.context}` : item.code,
+    }))
+  );
+  return cachedAll;
+}
 
 // Totes les paraules de la consulta han d'aparèixer a l'entrada. Puntuen més
 // les coincidències al títol, i encara més si el títol comença igual.
-export function search(query, limit = 40) {
+export function search(query, courseId = null, limit = 40) {
   const words = normalize(query).split(/\s+/).filter(Boolean);
   if (words.length === 0) return [];
   const phrase = words.join(' ');
 
   const matches = [];
-  getIndex().forEach((entry, order) => {
+  getIndex(courseId).forEach((entry, order) => {
     if (!words.every((word) => entry.haystack.includes(word))) return;
 
     let score = KINDS[entry.kind].weight;
@@ -143,10 +166,35 @@ export function search(query, limit = 40) {
     .map((match) => match.entry);
 }
 
-// El que es mostra abans d'escriure res: accés directe a totes les unitats.
-export function suggestions() {
-  const index = getIndex();
-  return [...index.filter((entry) => entry.kind === 'unit'), ...index.filter((entry) => entry.kind === 'page')];
+// El que es mostra abans d'escriure res: accés directe a totes les unitats
+// del dossier o, a la portada general, a la portada de cada dossier.
+export function suggestions(courseId = null) {
+  const course = courses.find((item) => item.id === courseId);
+  if (!course) {
+    return courses.map((item) => ({
+      id: `portal-${item.id}`,
+      course: item.id,
+      kind: 'page',
+      title: `${item.code} · ${item.title}`,
+      context: item.summary,
+      href: courseHref(item.id),
+      anchor: null,
+    }));
+  }
+  const index = getIndex(course.id);
+  return [
+    ...index.filter((entry) => entry.kind === 'unit'),
+    ...index.filter((entry) => entry.kind === 'page'),
+    {
+      id: 'portal',
+      course: null,
+      kind: 'page',
+      title: 'Tots els dossiers',
+      context: 'Canvia de dossier',
+      href: portalHref,
+      anchor: null,
+    },
+  ];
 }
 
 // Agrupa els resultats per tipus, amb un màxim per grup. Les entrades arriben

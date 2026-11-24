@@ -6,8 +6,9 @@ export default defineConfig({
   base: './',
   plugins: [react()],
   build: {
-    // Tot el temari (11 unitats amb els seus exemples) viatja en un sol fitxer
-    // perquè l'aplicació funcioni sense connexió un cop carregada.
-    chunkSizeWarningLimit: 900,
+    // Tot el temari (els dos dossiers, amb els seus exemples i exercicis)
+    // viatja en un sol fitxer perquè l'aplicació funcioni sense connexió un cop
+    // carregada. Per això el límit de l'avís és més alt que l'habitual.
+    chunkSizeWarningLimit: 2500,
   },
 });

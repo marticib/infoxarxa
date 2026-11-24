@@ -3,6 +3,7 @@ import CodeRunner from '../code/CodeRunner.jsx';
 import Icon from '../ui/Icon.jsx';
 import RichText, { Paragraphs } from '../ui/RichText.jsx';
 import { levelLabel } from '../../lib/exerciseBank.js';
+import { useRunnerMode } from '../../state/CourseContext.jsx';
 import { exerciseKey, useProgress } from '../../state/ProgressContext.jsx';
 
 const DEFAULT_STARTER = '// Escriu el teu codi aquí\n';
@@ -13,6 +14,12 @@ const DEFAULT_STARTER = '// Escriu el teu codi aquí\n';
 // Amb `unitId`, l'exercici es pot marcar com a fet. La marca es desa amb el
 // progrés i és la mateixa a la unitat i a la secció d'exercicis. `level` i
 // `fromUnit` només es fan servir a la secció d'exercicis.
+//
+// Al dossier d'HTML i CSS (mode 'page') l'exercici no té `starter`: parteix
+// dels fitxers `html` i `css`, la solució és { html, css } amb els fitxers que
+// canvien, i es dona per fet quan passen les comprovacions (`checks`).
+// Quan la solució només ensenya un tros (`partialSolution`), `full` porta els
+// fitxers sencers per poder pintar l'objectiu.
 //
 // `headingLevel`: dins d'una unitat el títol és un h3 (penja de l'h2 de
 // l'apartat); a la secció d'exercicis penja directament de l'h1 i és un h2.
@@ -27,6 +34,8 @@ export default function ExerciseCard({
   headingLevel = 3,
 }) {
   const { progress, setExerciseDone } = useProgress();
+  const mode = useRunnerMode();
+  const isPage = mode === 'page';
   const labels = {
     exercise: `Exercici ${number}`,
     final: 'Exercici final',
@@ -112,9 +121,16 @@ export default function ExerciseCard({
       {brief}
 
       <CodeRunner
-        js={exercise.starter ?? DEFAULT_STARTER}
+        mode={mode}
+        js={isPage ? '' : (exercise.starter ?? DEFAULT_STARTER)}
         html={exercise.html}
         css={exercise.css}
+        focus={exercise.focus}
+        checks={exercise.checks}
+        target={isPage && exercise.solution && exercise.target !== false ? (exercise.full ?? exercise.solution) : undefined}
+        boxes={exercise.boxes}
+        viewport={exercise.viewport}
+        pageWidth={exercise.width}
         data={exercise.dataJs}
         fileNames={exercise.fileNames}
         hint={exercise.hint}

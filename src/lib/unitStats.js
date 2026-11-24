@@ -1,6 +1,3 @@
-import { units } from '../content/index.js';
-import { extraExercises } from '../content/exercises/index.js';
-
 // Xifres d'una unitat, calculades a partir del contingut (mai escrites a mà).
 export function unitStats(unit) {
   let examples = 0;
@@ -18,13 +15,13 @@ export function unitStats(unit) {
   };
 }
 
-// Xifres de tot el dossier.
-export function dossierStats() {
-  const totals = { units: units.length, examples: 0, exercises: 0, questions: 0 };
-  for (const unit of units) {
+// Xifres de tot un dossier.
+export function dossierStats(course) {
+  const totals = { units: course.units.length, examples: 0, exercises: 0, questions: 0 };
+  for (const unit of course.units) {
     const stats = unitStats(unit);
     totals.examples += stats.examples;
-    totals.exercises += stats.exercises + (extraExercises[unit.id]?.length ?? 0);
+    totals.exercises += stats.exercises + (course.extraExercises[unit.id]?.length ?? 0);
     totals.questions += stats.questions;
   }
   return totals;

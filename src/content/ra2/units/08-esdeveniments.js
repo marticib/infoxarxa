@@ -1,4 +1,4 @@
-import { p, list, code, example, concept, warning, project, table, compare, custom } from '../blocks.js';
+import { p, list, code, example, concept, warning, project, table, compare, custom } from '../../blocks.js';
 
 const CSS_BOTONS = `button {
   padding: 8px 14px;

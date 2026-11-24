@@ -608,6 +608,195 @@
   border: 0;
 }
 
+/* El resultat i l'objectiu ocupen el mateix lloc: només se'n veu un, i en
+   canviar de l'un a l'altre la pàgina no salta. */
+.preview__stage {
+  display: grid;
+}
+
+.preview__stage > .preview__frame {
+  grid-area: 1 / 1;
+}
+
+.preview__frame--behind {
+  visibility: hidden;
+}
+
+/* Finestra simulada: la pàgina es pinta amb amplada d'escriptori i es mostra
+   reduïda fins que hi cap. */
+.preview__stage--scaled {
+  position: relative;
+  display: block;
+  overflow: hidden;
+}
+
+.preview__stage--scaled > .preview__frame {
+  position: absolute;
+  top: 0;
+  left: 0;
+  max-width: none;
+  transform-origin: 0 0;
+}
+
+.runner--fullscreen .preview__stage--scaled {
+  height: 70vh;
+  min-height: 18rem;
+}
+
+/* ---------- Previsualització d'HTML i CSS: títol, objectiu i quadrats ---------- */
+
+.preview--page .preview__bar {
+  flex-wrap: wrap;
+  row-gap: 0.35rem;
+}
+
+.preview__title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.preview__tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+  margin-left: auto;
+}
+
+.preview__views {
+  display: flex;
+  padding: 2px;
+  background: var(--surface-3);
+  border-radius: 999px;
+}
+
+.preview__view,
+.preview__boxes {
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: center;
+  min-height: 1.75rem;
+  padding: 0.15rem 0.7rem;
+  font: inherit;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  transition: background var(--fast), color var(--fast), border-color var(--fast);
+}
+
+.preview__view:hover,
+.preview__boxes:hover {
+  color: var(--text);
+}
+
+.preview__view[aria-pressed='true'] {
+  color: var(--text);
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
+}
+
+.preview__boxes {
+  background: var(--surface);
+  border-color: var(--border-strong);
+}
+
+.preview__boxes[aria-pressed='true'] {
+  color: var(--on-primary);
+  background: var(--primary-solid);
+  border-color: var(--primary-solid);
+}
+
+@media (pointer: coarse) {
+  .preview__view,
+  .preview__boxes {
+    min-height: 2.5rem;
+    padding-inline: 0.9rem;
+  }
+}
+
+.runner__live {
+  display: inline-flex;
+  gap: 0.4rem;
+  align-items: center;
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-faint);
+}
+
+.runner__live-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  background: var(--success-solid);
+  border-radius: 50%;
+}
+
+/* ---------- Comprovacions d'un exercici ---------- */
+
+.checks {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding: 0.75rem 0.9rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-s);
+}
+
+.checks--ok {
+  background: var(--success-bg);
+  border-color: var(--success-border);
+}
+
+.checks__title {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 650;
+  color: var(--text-muted);
+}
+
+.checks--ok .checks__title {
+  color: var(--success);
+}
+
+.checks__list {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  list-style: none;
+}
+
+.checks__item {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  color: var(--text-muted);
+}
+
+.checks__item .icon {
+  flex: none;
+  margin-top: 0.2rem;
+}
+
+.checks__item--ok {
+  color: var(--text);
+}
+
+.checks__item--ok .icon {
+  color: var(--success);
+}
+
 .preview--hidden {
   position: absolute;
   width: 0;
@@ -1926,9 +2115,15 @@ html.fs-panel .page--wide {
     min-height: 0;
   }
 
-  .runner--fullscreen .preview__frame {
+  .runner--fullscreen .preview__stage {
     flex: 1 1 0;
+    grid-template-rows: minmax(0, 1fr);
     height: auto;
+    min-height: 0;
+  }
+
+  .runner--fullscreen .preview__frame {
+    height: 100%;
     min-height: 0;
   }
 

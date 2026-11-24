@@ -1,7 +1,21 @@
 import { useEffect, useState } from 'react';
+import { courseById, courseOfUnit, DEFAULT_COURSE_ID } from './courses.js';
 
-// Rutes basades en el hash (#/unitat/variables) perquè l'aplicació funcioni
-// des de qualsevol carpeta i sense configurar cap servidor.
+// Rutes basades en el hash (#/ra2/unitat/variables) perquè l'aplicació
+// funcioni des de qualsevol carpeta i sense configurar cap servidor.
+//
+//   #/                              portada: tots els dossiers
+//   #/ra1                           portada d'un dossier
+//   #/ra1/unitat/flexbox            una unitat
+//   #/ra1/unitat/flexbox/gap        un apartat d'una unitat
+//   #/ra1/exercicis                 índex dels exercicis
+//   #/ra1/exercicis/flexbox         un tema
+//   #/ra1/exercicis/flexbox/menu    un exercici d'un tema
+//   #/ra1/glossari/flex             el glossari, amb «flex» ja cercat
+//
+// El prefix del dossier es pot ometre: #/unitat/flexbox es troba pel nom de
+// la unitat, i #/exercicis o #/glossari porten al dossier de JavaScript, que
+// és on portaven abans que n'hi hagués dos.
 
 export function parseHash(hash) {
   const parts = hash
@@ -16,18 +30,37 @@ export function parseHash(hash) {
       }
     });
 
-  if (parts.length === 0) return { page: 'home', unitId: null, anchor: null };
-  if (parts[0] === 'unitat' && parts[1]) {
-    return { page: 'unit', unitId: parts[1], anchor: parts[2] || null };
+  if (parts.length === 0) return { page: 'portal', courseId: null, unitId: null, anchor: null };
+
+  let courseId = null;
+  if (courseById(parts[0])) courseId = parts.shift();
+  if (parts.length === 0) return { page: 'home', courseId, unitId: null, anchor: null };
+
+  const [section, id, anchor] = parts;
+  const owner = id ? courseOfUnit(id) : null;
+  // Una unitat d'un altre dossier (#/ra1/unitat/variables) no existeix aquí.
+  const mismatch = Boolean(owner && courseId && owner.id !== courseId);
+
+  if (section === 'unitat' && id) {
+    return {
+      page: 'unit',
+      courseId: courseId ?? owner?.id ?? null,
+      unitId: mismatch ? null : id,
+      anchor: anchor || null,
+    };
   }
-  // #/exercicis és l'índex; #/exercicis/bucles, un tema; i amb un tercer
-  // tros (#/exercicis/bucles/fizz-buzz) s'hi arriba directament a un exercici.
-  if (parts[0] === 'exercicis') {
-    return { page: 'exercises', unitId: parts[1] || null, anchor: parts[2] || null };
+  if (section === 'exercicis') {
+    return {
+      page: mismatch ? 'notfound' : 'exercises',
+      courseId: courseId ?? owner?.id ?? DEFAULT_COURSE_ID,
+      unitId: id || null,
+      anchor: anchor || null,
+    };
   }
-  // #/glossari/array obre el glossari amb «array» ja cercat.
-  if (parts[0] === 'glossari') return { page: 'glossary', unitId: null, anchor: parts[1] || null };
-  return { page: 'notfound', unitId: null, anchor: null };
+  if (section === 'glossari') {
+    return { page: 'glossary', courseId: courseId ?? DEFAULT_COURSE_ID, unitId: null, anchor: id || null };
+  }
+  return { page: 'notfound', courseId, unitId: null, anchor: null };
 }
 
 export function useHashRoute() {
@@ -42,8 +75,23 @@ export function useHashRoute() {
   return route;
 }
 
-export const homeHref = '#/';
-export const glossaryHref = '#/glossari';
-export const exercisesHref = (topicId, exerciseId) =>
-  `#/exercicis${topicId ? `/${topicId}` : ''}${topicId && exerciseId ? `/${exerciseId}` : ''}`;
-export const unitHref = (unitId, anchor) => `#/unitat/${unitId}${anchor ? `/${anchor}` : ''}`;
+/** La portada amb tots els dossiers. */
+export const portalHref = '#/';
+
+/** La portada d'un dossier. */
+export const courseHref = (courseId) => `#/${courseId}`;
+
+/** Una unitat (i, si es vol, un dels seus apartats). El dossier es dedueix de la unitat. */
+export const unitHref = (unitId, anchor) =>
+  `#/${courseOfUnit(unitId)?.id ?? DEFAULT_COURSE_ID}/unitat/${unitId}${anchor ? `/${anchor}` : ''}`;
+
+/** L'índex dels exercicis d'un dossier. */
+export const exercisesHref = (courseId) => `#/${courseId}/exercicis`;
+
+/** Un tema d'exercicis (i, si es vol, un exercici concret). */
+export const topicHref = (topicId, exerciseId) =>
+  `#/${courseOfUnit(topicId)?.id ?? DEFAULT_COURSE_ID}/exercicis/${topicId}${exerciseId ? `/${exerciseId}` : ''}`;
+
+/** El glossari d'un dossier (i, si es vol, amb un terme ja cercat). */
+export const glossaryHref = (courseId, term) =>
+  `#/${courseId}/glossari${term ? `/${encodeURIComponent(term)}` : ''}`;

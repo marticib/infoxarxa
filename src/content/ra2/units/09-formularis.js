@@ -1,4 +1,4 @@
-import { p, list, code, example, concept, warning, project, table } from '../blocks.js';
+import { p, list, code, example, concept, warning, project, table } from '../../blocks.js';
 
 const CSS_FORM = `label {
   display: block;

@@ -6,6 +6,14 @@ const ICONS = {
   expand: <path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" />,
   compress: <path d="M9 4v5H4M20 9h-5V4M15 20v-5h5M4 15h5v5" />,
   close: <path d="M6 6l12 12M18 6L6 18" />,
+  boxes: (
+    <>
+      <rect x="3.5" y="3.5" width="17" height="17" rx="2" strokeDasharray="3 2.4" />
+      <rect x="7" y="7.5" width="4" height="9" rx="1" />
+      <rect x="13" y="7.5" width="4" height="4" rx="1" />
+    </>
+  ),
+  arrowDown: <path d="M12 5v14M6 13l6 6 6-6" />,
   sun: (
     <>
       <circle cx="12" cy="12" r="4" />

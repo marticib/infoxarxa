@@ -681,3 +681,264 @@
   background: var(--success-bg);
   border-color: var(--success-border);
 }
+
+/* ---------- BoxSketch: el dibuix de quadrats ---------- */
+
+.sketch {
+  --sketch-0: #c2255c;
+  --sketch-1: #1864ab;
+  --sketch-2: #2b8a3e;
+  --sketch-3: #d9480f;
+  --sketch-4: #5f3dc4;
+  --sketch-5: #0b7285;
+}
+
+:root[data-theme="dark"] .sketch {
+  --sketch-0: #f783ac;
+  --sketch-1: #74c0fc;
+  --sketch-2: #8ce99a;
+  --sketch-3: #ffa94d;
+  --sketch-4: #b197fc;
+  --sketch-5: #66d9e8;
+}
+
+.sketch__layout {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.sketch__layout > * {
+  min-width: 0;
+}
+
+.sketch__canvas {
+  padding: 0.75rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+}
+
+.sketch__box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+  padding: 0.3rem;
+  color: var(--sketch-colour);
+  background: color-mix(in srgb, var(--sketch-colour) 7%, var(--surface));
+  border: 2px dashed var(--sketch-colour);
+  border-radius: 6px;
+}
+
+.sketch__box--d0 { --sketch-colour: var(--sketch-0); }
+.sketch__box--d1 { --sketch-colour: var(--sketch-1); }
+.sketch__box--d2 { --sketch-colour: var(--sketch-2); }
+.sketch__box--d3 { --sketch-colour: var(--sketch-3); }
+.sketch__box--d4 { --sketch-colour: var(--sketch-4); }
+.sketch__box--d5 { --sketch-colour: var(--sketch-5); }
+
+.sketch__box--open {
+  background: var(--surface);
+}
+
+.sketch__name {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.5rem;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 650;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.sketch__dir {
+  display: inline-flex;
+  gap: 0.2rem;
+  align-items: center;
+  padding: 0 0.35rem;
+  font-weight: 600;
+  color: var(--surface);
+  background: var(--sketch-colour);
+  border-radius: 999px;
+}
+
+.sketch__children {
+  display: flex;
+  flex: 1;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.sketch__children--column {
+  flex-direction: column;
+}
+
+.sketch__children--grid {
+  display: grid;
+}
+
+@media (min-width: 52rem) {
+  .sketch__layout {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    align-items: start;
+  }
+
+  /* Sense l'HTML al costat, el dibuix ocupa tota l'amplada */
+  .sketch__layout--solo {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ---------- CssPlayground: banc de proves ---------- */
+
+.playground__layout {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.playground__layout > * {
+  min-width: 0;
+}
+
+.playground__controls {
+  display: grid;
+  gap: 0.7rem;
+  align-content: start;
+}
+
+.playground__control {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.playground__control label {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.5rem;
+  align-items: baseline;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.playground__who {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--text-faint);
+}
+
+.playground__control select {
+  width: 100%;
+  min-height: 2.4rem;
+  padding: 0.3rem 0.6rem;
+  font-family: var(--font-mono);
+  font-size: 0.86rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-s);
+}
+
+.playground__range {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.playground__range input {
+  flex: 1;
+  min-width: 0;
+  min-height: 1.75rem;
+  accent-color: var(--primary-solid);
+}
+
+.playground__range output {
+  flex: none;
+  min-width: 3.2rem;
+  font-family: var(--font-mono);
+  font-size: 0.84rem;
+  text-align: right;
+}
+
+.playground__reset {
+  justify-self: start;
+}
+
+/* Fa de «pàgina»: és la referència dels fills amb position: absolute quan el
+   contenidor no està posicionat. */
+.playground__page {
+  position: relative;
+  padding: 0.75rem;
+  overflow: hidden;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+}
+
+.playground__container {
+  background: var(--surface);
+  border: 2px dashed var(--border-control);
+  border-radius: 0 6px 6px;
+}
+
+.playground__tag {
+  display: inline-block;
+  padding: 0.1rem 0.45rem;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  line-height: 1.4;
+  vertical-align: bottom;
+  color: var(--surface);
+  background: var(--border-control);
+  border-radius: 6px 6px 0 0;
+}
+
+.playground__item {
+  min-width: 2.25rem;
+  padding: 0.5rem 0.7rem;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  font-weight: 650;
+  color: var(--theory);
+  text-align: center;
+  background: var(--theory-bg);
+  border: 2px solid var(--theory-border);
+  border-radius: 6px;
+}
+
+.playground__item--highlight {
+  color: var(--challenge);
+  background: var(--challenge-bg);
+  border-color: var(--challenge);
+}
+
+@media (min-width: 46rem) {
+  .playground__layout {
+    grid-template-columns: minmax(11rem, 15rem) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+/* El dibuix de la portada del dossier d'HTML i CSS */
+.hero__sketch {
+  padding: 0.9rem;
+}
+
+.hero__sketch-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.hero__sketch-grid .sketch__box {
+  min-height: 2.75rem;
+}
+
+/* Un quadrat que ajuda a pensar però no arriba a ser cap element */
+.sketch__box--virtual {
+  background: transparent;
+  border-style: dotted;
+}

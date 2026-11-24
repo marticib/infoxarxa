@@ -1,6 +1,6 @@
 import { useId, useState } from 'react';
 import CodeRunner from '../code/CodeRunner.jsx';
-import { projectDemo } from '../../content/projectCode.js';
+import { projectDemo } from '../../content/ra2/projectCode.js';
 
 const PAGES = [
   { id: 'home', label: 'Pàgina inicial', fileNames: { js: 'inici.js', html: 'index.html', css: 'estils.css' } },

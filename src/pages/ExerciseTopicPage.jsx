@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import ExerciseCard from '../components/lesson/ExerciseCard.jsx';
 import Icon from '../components/ui/Icon.jsx';
 import PageFullscreenButton from '../components/ui/PageFullscreenButton.jsx';
 import { deNumber } from '../lib/catalan.js';
-import { doneInTopic, LEVELS, topics } from '../lib/exerciseBank.js';
-import { exercisesHref, unitHref } from '../lib/router.js';
+import { doneInTopic, LEVELS } from '../lib/exerciseBank.js';
+import { exercisesHref, topicHref, unitHref } from '../lib/router.js';
 import { plural } from '../lib/unitStats.js';
+import { useCourse } from '../state/CourseContext.jsx';
 import { useProgress } from '../state/ProgressContext.jsx';
 
 const ALL = 0;
@@ -16,6 +17,8 @@ export const exerciseAnchor = (exerciseId) => `exercici-${exerciseId}`;
 // Tots els exercicis d'un tema, de menys a més dificultat.
 export default function ExerciseTopicPage({ topic, anchor }) {
   const { progress } = useProgress();
+  const course = useCourse();
+  const topics = course.topics;
   const [level, setLevel] = useState(ALL);
 
   const total = topic.items.length;
@@ -23,16 +26,27 @@ export default function ExerciseTopicPage({ topic, anchor }) {
   const status = done === 0 ? 'pending' : done === total ? 'completed' : 'visited';
   const visible = topic.items.filter((item) => level === ALL || item.level === level);
 
-  // Enllaç directe a un exercici: #/exercicis/bucles/fizz-buzz
+  // Enllaç directe a un exercici: #/ra2/exercicis/bucles/fizz-buzz
+  // Si hi ha un filtre posat, l'exercici pot no ser a la llista: primer es
+  // treu el filtre i, quan l'exercici ja s'ha pintat, la pàgina s'hi desplaça.
+  const pendingScroll = useRef(null);
   useEffect(() => {
     if (!anchor) return;
+    pendingScroll.current = topic.items.some((item) => item.exercise.id === anchor) ? anchor : null;
     setLevel(ALL);
-    // Esperem que React hagi pintat la llista sencera abans de moure'ns.
+  }, [topic, anchor]);
+
+  // Després de cada pintada, mentre el desplaçament estigui pendent.
+  useEffect(() => {
+    if (!pendingScroll.current) return undefined;
     const frame = requestAnimationFrame(() => {
-      document.getElementById(exerciseAnchor(anchor))?.scrollIntoView({ behavior: 'instant' });
+      const element = document.getElementById(exerciseAnchor(pendingScroll.current));
+      if (!element) return;
+      pendingScroll.current = null;
+      element.scrollIntoView({ behavior: 'instant' });
     });
     return () => cancelAnimationFrame(frame);
-  }, [topic.id, anchor]);
+  });
 
   const index = topics.indexOf(topic);
   const previous = topics[index - 1];
@@ -51,7 +65,7 @@ export default function ExerciseTopicPage({ topic, anchor }) {
     <article className="page">
       <header className="lesson__header">
         <p className="lesson__eyebrow eyebrow">
-          Exercicis · Tema {topic.number} {deNumber(topics.length)}
+          {course.code} · Exercicis · Tema {topic.number} {deNumber(topics.length)}
         </p>
         <h1 className="lesson__title" tabIndex={-1} data-page-title>
           {topic.title}
@@ -72,7 +86,7 @@ export default function ExerciseTopicPage({ topic, anchor }) {
               </a>
             </li>
             <li>
-              <a href={exercisesHref()}>
+              <a href={exercisesHref(course.id)}>
                 <Icon name="list" size={14} /> Tots els temes
               </a>
             </li>
@@ -114,7 +128,7 @@ export default function ExerciseTopicPage({ topic, anchor }) {
       <nav className="prevnext" aria-label="Tema anterior i següent">
         <a
           className="prevnext__link prevnext__link--previous"
-          href={previous ? exercisesHref(previous.id) : exercisesHref()}
+          href={previous ? topicHref(previous.id) : exercisesHref(course.id)}
         >
           <span className="prevnext__arrow">
             <Icon name="chevronLeft" size={18} />
@@ -126,7 +140,7 @@ export default function ExerciseTopicPage({ topic, anchor }) {
         </a>
         <a
           className="prevnext__link prevnext__link--next"
-          href={next ? exercisesHref(next.id) : unitHref('projecte-final')}
+          href={next ? topicHref(next.id) : unitHref(course.projectUnitId)}
         >
           <span className="prevnext__text">
             <span className="prevnext__label">{next ? `Següent · Tema ${next.number}` : 'Per acabar'}</span>

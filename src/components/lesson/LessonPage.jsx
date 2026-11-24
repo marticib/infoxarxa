@@ -9,12 +9,11 @@ import PreviousNextNavigation from '../layout/PreviousNextNavigation.jsx';
 import Icon from '../ui/Icon.jsx';
 import PageFullscreenButton from '../ui/PageFullscreenButton.jsx';
 import RichText, { Paragraphs } from '../ui/RichText.jsx';
-import { units } from '../../content/index.js';
-import { glossary } from '../../content/glossary.js';
 import { deNumber } from '../../lib/catalan.js';
 import { extraCount } from '../../lib/exerciseBank.js';
-import { exercisesHref, unitHref } from '../../lib/router.js';
+import { topicHref, unitHref } from '../../lib/router.js';
 import { plural, unitStats } from '../../lib/unitStats.js';
+import { useCourse } from '../../state/CourseContext.jsx';
 import { passMark, STATUS_LABELS, unitStatus, useProgress } from '../../state/ProgressContext.jsx';
 
 // Apartats fixos que tenen totes les unitats, a més dels propis.
@@ -29,6 +28,9 @@ const FIXED_AFTER = [
 // Pàgina d'una unitat: la mateixa estructura per a totes, a partir de les dades.
 export default function LessonPage({ unit, anchor }) {
   const { progress, markVisited } = useProgress();
+  const course = useCourse();
+  const units = course.units;
+  const glossary = course.glossary;
 
   const tocItems = useMemo(
     () => [...FIXED_BEFORE, ...unit.sections.map((section) => ({ id: section.id, title: section.title })), ...FIXED_AFTER],
@@ -121,7 +123,7 @@ export default function LessonPage({ unit, anchor }) {
             </ul>
           </div>
 
-          {unit.projectPiece ? <ProjectStep title="Què aporta al gestor de tasques" text={unit.projectPiece} /> : null}
+          {unit.projectPiece ? <ProjectStep title={course.guide.pieceTitle} text={unit.projectPiece} /> : null}
 
           {unit.finalProject ? (
             <p className="project-link">
@@ -130,7 +132,7 @@ export default function LessonPage({ unit, anchor }) {
               </span>
               <span>
                 <strong>Per al projecte final:</strong> <RichText text={unit.finalProject} />{' '}
-                <a href={unitHref('projecte-final')}>Veure el projecte</a>
+                <a href={unitHref(course.projectUnitId)}>Veure el projecte</a>
               </span>
             </p>
           ) : null}
@@ -170,7 +172,7 @@ export default function LessonPage({ unit, anchor }) {
           <ExerciseCard exercise={unit.finalExercise} variant="final" unitId={unit.id} />
 
           {moreExercises > 0 ? (
-            <a className="more-exercises" href={exercisesHref(unit.id)}>
+            <a className="more-exercises" href={topicHref(unit.id)}>
               <span className="more-exercises__icon" aria-hidden="true">
                 <Icon name="pencil" size={17} />
               </span>

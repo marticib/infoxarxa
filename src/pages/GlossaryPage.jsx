@@ -1,8 +1,8 @@
 import { useEffect, useId, useMemo, useState } from 'react';
 import Glossary from '../components/lesson/Glossary.jsx';
 import Icon from '../components/ui/Icon.jsx';
-import { glossary } from '../content/glossary.js';
 import { normalize } from '../lib/text.js';
+import { useCourse } from '../state/CourseContext.jsx';
 
 const letterOf = (term) => normalize(term).replace(/[^a-z0-9]/g, '').charAt(0).toUpperCase() || '#';
 
@@ -11,12 +11,14 @@ const letterOf = (term) => normalize(term).replace(/[^a-z0-9]/g, '').charAt(0).t
 export default function GlossaryPage({ initialQuery }) {
   const [query, setQuery] = useState(initialQuery ?? '');
   const inputId = useId();
+  const course = useCourse();
+  const glossary = course.glossary;
 
   useEffect(() => {
     if (initialQuery) setQuery(initialQuery);
   }, [initialQuery]);
 
-  const sorted = useMemo(() => [...glossary].sort((a, b) => a.term.localeCompare(b.term, 'ca')), []);
+  const sorted = useMemo(() => [...glossary].sort((a, b) => a.term.localeCompare(b.term, 'ca')), [glossary]);
   const needle = normalize(query.trim());
   const results = needle
     ? sorted.filter((item) => normalize(item.term).includes(needle) || normalize(item.definition).includes(needle))
@@ -35,7 +37,7 @@ export default function GlossaryPage({ initialQuery }) {
   return (
     <article className="page page--wide">
       <header className="lesson__header">
-        <p className="lesson__eyebrow eyebrow">Consulta</p>
+        <p className="lesson__eyebrow eyebrow">{course.code} · Consulta</p>
         <h1 className="lesson__title" tabIndex={-1} data-page-title>
           Glossari
         </h1>
@@ -57,7 +59,7 @@ export default function GlossaryPage({ initialQuery }) {
               type="search"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Per exemple: array, const…"
+              placeholder={course.glossaryPlaceholder ?? 'Cerca una paraula…'}
               autoComplete="off"
             />
           </div>

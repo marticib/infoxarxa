@@ -1,8 +1,11 @@
 import Icon from '../components/ui/Icon.jsx';
-import { homeHref } from '../lib/router.js';
+import { courseHref, portalHref } from '../lib/router.js';
+import { useCourse } from '../state/CourseContext.jsx';
 import { openSearch } from '../lib/searchIndex.js';
 
 export default function NotFoundPage() {
+  const course = useCourse();
+
   return (
     <article className="page notfound">
       <p className="notfound__code" aria-hidden="true">
@@ -14,7 +17,7 @@ export default function NotFoundPage() {
           Aquesta pàgina no existeix
         </h1>
         <p className="lesson__lead">
-          L'adreça no correspon a cap unitat del dossier. Potser l'enllaç és antic o hi ha alguna lletra equivocada.
+          L'adreça no correspon a cap pàgina del dossier. Potser l'enllaç és antic o hi ha alguna lletra equivocada.
         </p>
       </header>
 
@@ -27,7 +30,7 @@ export default function NotFoundPage() {
       </p>
 
       <div className="notfound__actions">
-        <a className="btn btn--primary" href={homeHref}>
+        <a className="btn btn--primary" href={course ? courseHref(course.id) : portalHref}>
           <Icon name="home" size={17} />
           Torna a l'inici
         </a>

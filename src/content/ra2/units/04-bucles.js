@@ -1,4 +1,4 @@
-import { p, list, code, example, concept, warning, challenge, project, table, compare, custom } from '../blocks.js';
+import { p, list, code, example, concept, warning, challenge, project, table, compare, custom } from '../../blocks.js';
 
 export default {
   id: 'bucles',

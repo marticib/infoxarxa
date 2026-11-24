@@ -1,20 +1,22 @@
 import Icon from '../ui/Icon.jsx';
-import { units } from '../../content/index.js';
-import { glossaryHref, homeHref, unitHref } from '../../lib/router.js';
+import { courseOfUnit } from '../../lib/courses.js';
+import { courseHref, glossaryHref, unitHref } from '../../lib/router.js';
 
 // Enllaços a la unitat anterior i a la següent.
 export default function PreviousNextNavigation({ unitId }) {
+  const course = courseOfUnit(unitId);
+  const units = course.units;
   const index = units.findIndex((unit) => unit.id === unitId);
   const previous = units[index - 1];
   const next = units[index + 1];
 
   const previousLink = previous
     ? { href: unitHref(previous.id), label: `Unitat ${previous.number}`, title: previous.title }
-    : { href: homeHref, label: 'Portada', title: 'Inici del dossier' };
+    : { href: courseHref(course.id), label: 'Portada', title: 'Inici del dossier' };
 
   const nextLink = next
     ? { href: unitHref(next.id), label: `Unitat ${next.number}`, title: next.title }
-    : { href: glossaryHref, label: 'Consulta', title: 'Glossari' };
+    : { href: glossaryHref(course.id), label: 'Consulta', title: 'Glossari' };
 
   return (
     <nav className="prevnext" aria-label="Unitat anterior i següent">

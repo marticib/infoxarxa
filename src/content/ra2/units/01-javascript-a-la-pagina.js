@@ -1,4 +1,4 @@
-import { p, list, code, example, concept, warning, challenge, project, table, compare, custom } from '../blocks.js';
+import { p, list, code, example, concept, warning, challenge, project, table, compare, custom } from '../../blocks.js';
 
 const PLANTILLA_HTML = `<!DOCTYPE html>
 <html lang="ca">

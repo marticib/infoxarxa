@@ -2,7 +2,8 @@ import { forwardRef, useEffect, useRef } from 'react';
 import Icon from '../ui/Icon.jsx';
 import ProgressBar from './ProgressBar.jsx';
 import { usePageFullscreen } from '../ui/PageFullscreenButton.jsx';
-import { useProgress } from '../../state/ProgressContext.jsx';
+import { useCourse } from '../../state/CourseContext.jsx';
+import { completedIn, useProgress } from '../../state/ProgressContext.jsx';
 import { useTheme } from '../../state/ThemeContext.jsx';
 
 const IS_APPLE = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform ?? '');
@@ -47,7 +48,8 @@ const Header = forwardRef(function Header(
   { title, eyebrow, menuOpen, menuId, onMenuToggle, onSearchOpen, showReading },
   menuButtonRef
 ) {
-  const { completedCount, totalUnits } = useProgress();
+  const { progress } = useProgress();
+  const course = useCourse();
   const { theme, toggleTheme } = useTheme();
   const isDark = theme === 'dark';
   const fullscreen = usePageFullscreen();
@@ -86,7 +88,7 @@ const Header = forwardRef(function Header(
           </kbd>
         </button>
 
-        <ProgressBar value={completedCount} max={totalUnits} compact />
+        {course ? <ProgressBar value={completedIn(course, progress)} max={course.units.length} compact /> : null}
 
         {fullscreen.available ? (
           <button

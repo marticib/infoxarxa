@@ -1,17 +1,20 @@
 import { useEffect, useRef } from 'react';
 import Icon from '../ui/Icon.jsx';
 import ProgressBar from './ProgressBar.jsx';
-import { units } from '../../content/index.js';
-import { exercisesHref, glossaryHref, homeHref, unitHref } from '../../lib/router.js';
-import { STATUS_LABELS, unitStatus, useProgress } from '../../state/ProgressContext.jsx';
+import { courses } from '../../lib/courses.js';
+import { courseHref, exercisesHref, glossaryHref, portalHref, unitHref } from '../../lib/router.js';
+import { useCourse } from '../../state/CourseContext.jsx';
+import { completedIn, isProjectDone, STATUS_LABELS, unitStatus, useProgress } from '../../state/ProgressContext.jsx';
 
 // Navegació principal. En escriptori és una columna fixa; en mòbil és un
 // calaix que s'obre des del botó de menú de la capçalera.
 //
 // Les unitats es mostren com un recorregut: una línia les uneix i cada pas
-// indica si està pendent, començat o completat.
+// indica si està pendent, començat o completat. A dalt de tot es tria el
+// dossier; a la portada general, on encara no n'hi ha cap, només es veu això.
 export default function Sidebar({ id, open, onClose, route, onResetRequest }) {
-  const { progress, completedCount, totalUnits } = useProgress();
+  const { progress } = useProgress();
+  const course = useCourse();
   const panelRef = useRef(null);
   const closeRef = useRef(null);
 
@@ -46,6 +49,7 @@ export default function Sidebar({ id, open, onClose, route, onResetRequest }) {
   const isHome = route.page === 'home';
   const isGlossary = route.page === 'glossary';
   const isExercises = route.page === 'exercises';
+  const units = course ? course.units : [];
 
   return (
     <>
@@ -53,13 +57,15 @@ export default function Sidebar({ id, open, onClose, route, onResetRequest }) {
 
       <aside id={id} ref={panelRef} className={`sidebar${open ? ' sidebar--open' : ''}`} aria-label="Navegació del dossier">
         <div className="sidebar__top">
-          <a className="brand" href={homeHref} onClick={onClose}>
-            <span className="brand__logo" aria-hidden="true">
-              JS
+          <a className="brand" href={course ? courseHref(course.id) : portalHref} onClick={onClose}>
+            <span className={`brand__logo${course ? ` brand__logo--${course.id}` : ''}`} aria-hidden="true">
+              {course ? course.logo : 'WEB'}
             </span>
             <span className="brand__text">
-              <span className="brand__title">JavaScript des de zero</span>
-              <span className="brand__subtitle">RA2 · Dossier interactiu</span>
+              <span className="brand__title">{course ? course.title : 'Dossiers interactius'}</span>
+              <span className="brand__subtitle">
+                {course ? `${course.code} · Dossier interactiu` : 'HTML, CSS i JavaScript'}
+              </span>
             </span>
           </a>
           <button ref={closeRef} type="button" className="icon-btn sidebar__close" onClick={onClose}>
@@ -68,26 +74,47 @@ export default function Sidebar({ id, open, onClose, route, onResetRequest }) {
           </button>
         </div>
 
-        <nav className="sidebar__nav" aria-label="Unitats">
-          <ul className="nav-list">
-            <li>
-              <a
-                className="nav-link nav-link--plain"
-                href={homeHref}
-                aria-current={isHome ? 'page' : undefined}
-                onClick={onClose}
-              >
-                <span className="nav-link__icon">
-                  <Icon name="home" size={17} />
-                </span>
-                <span className="nav-link__title">Inici</span>
-              </a>
-            </li>
+        <nav className="sidebar__nav" aria-label={course ? 'Unitats' : 'Dossiers'}>
+          <p className="sidebar__heading" id={`${id}-dossiers`}>
+            Dossiers
+          </p>
+          <ul className="course-switch" aria-labelledby={`${id}-dossiers`}>
+            {courses.map((item) => (
+              <li key={item.id}>
+                <a
+                  className="course-switch__link"
+                  href={courseHref(item.id)}
+                  aria-current={course?.id === item.id ? 'true' : undefined}
+                  onClick={onClose}
+                >
+                  <span className="course-switch__code">{item.code}</span>
+                  <span className="course-switch__name">{item.shortTitle}</span>
+                </a>
+              </li>
+            ))}
           </ul>
 
-          <p className="sidebar__heading" id={`${id}-unitats`}>
-            Unitats
-          </p>
+          {course ? (
+            <>
+              <ul className="nav-list">
+                <li>
+                  <a
+                    className="nav-link nav-link--plain"
+                    href={courseHref(course.id)}
+                    aria-current={isHome ? 'page' : undefined}
+                    onClick={onClose}
+                  >
+                    <span className="nav-link__icon">
+                      <Icon name="home" size={17} />
+                    </span>
+                    <span className="nav-link__title">Inici</span>
+                  </a>
+                </li>
+              </ul>
+
+              <p className="sidebar__heading" id={`${id}-unitats`}>
+                Unitats
+              </p>
           <ol className="nav-list nav-list--steps" aria-labelledby={`${id}-unitats`}>
             {units.map((unit) => {
               const status = unitStatus(progress, unit.id);
@@ -121,7 +148,7 @@ export default function Sidebar({ id, open, onClose, route, onResetRequest }) {
             <li>
               <a
                 className="nav-link nav-link--plain"
-                href={exercisesHref()}
+                href={exercisesHref(course.id)}
                 aria-current={isExercises ? 'page' : undefined}
                 onClick={onClose}
               >
@@ -134,7 +161,7 @@ export default function Sidebar({ id, open, onClose, route, onResetRequest }) {
             <li>
               <a
                 className="nav-link nav-link--plain"
-                href={glossaryHref}
+                href={glossaryHref(course.id)}
                 aria-current={isGlossary ? 'page' : undefined}
                 onClick={onClose}
               >
@@ -145,11 +172,24 @@ export default function Sidebar({ id, open, onClose, route, onResetRequest }) {
               </a>
             </li>
           </ul>
+            </>
+          ) : (
+            <ul className="nav-list">
+              <li>
+                <a className="nav-link nav-link--plain" href={portalHref} aria-current="page" onClick={onClose}>
+                  <span className="nav-link__icon">
+                    <Icon name="home" size={17} />
+                  </span>
+                  <span className="nav-link__title">Tots els dossiers</span>
+                </a>
+              </li>
+            </ul>
+          )}
         </nav>
 
         <div className="sidebar__footer">
-          <ProgressBar value={completedCount} max={totalUnits} />
-          {progress.projectDone ? (
+          {course ? <ProgressBar value={completedIn(course, progress)} max={course.units.length} /> : null}
+          {course && isProjectDone(course, progress) ? (
             <p className="sidebar__badge">
               <Icon name="trophy" size={16} />
               Projecte final completat

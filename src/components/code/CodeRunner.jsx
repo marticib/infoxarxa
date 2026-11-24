@@ -3,8 +3,8 @@ import CodeEditor from './CodeEditor.jsx';
 import CodeBlock from './CodeBlock.jsx';
 import ConsoleOutput, { consoleLines } from './ConsoleOutput.jsx';
 import Icon from '../ui/Icon.jsx';
-import { Paragraphs } from '../ui/RichText.jsx';
-import { buildSrcdoc, createRunId, SANDBOX_PERMISSIONS, SANDBOX_SOURCE } from '../../lib/sandbox.js';
+import RichText, { Paragraphs } from '../ui/RichText.jsx';
+import { buildSrcdoc, createRunId, HOST_SOURCE, SANDBOX_PERMISSIONS, SANDBOX_SOURCE } from '../../lib/sandbox.js';
 import { useFullscreen } from '../../state/FullscreenContext.jsx';
 
 // Editor + execució + resultat. És la peça que comparteixen els exemples, els
@@ -19,6 +19,15 @@ import { useFullscreen } from '../../state/FullscreenContext.jsx';
 // Com que llavors la targeta queda tapada, l'enunciat arriba per `brief` i es
 // repeteix dins del panell; `after` és el que va a sota de l'editor.
 
+// Té dos modes:
+//
+//  - 'code' (dossier de JavaScript): s'escriu codi, es prem «Executar» i es
+//    mira la consola i, si n'hi ha, la pàgina.
+//  - 'page' (dossier d'HTML i CSS): només hi ha HTML i CSS, i la pàgina
+//    s'actualitza sola mentre s'escriu. Es poden dibuixar els «quadrats» (el
+//    contorn de cada caixa), comparar amb l'«objectiu» (com queda la solució)
+//    i passar les comprovacions de l'exercici (`checks`).
+//
 // `data` és un segon fitxer de JavaScript opcional (dades.js) que s'executa
 // abans del principal. Els noms es poden canviar amb `fileNames`, per mostrar
 // els fitxers d'un projecte de veritat: { js: 'inici.js', html: 'index.html' }.
@@ -30,6 +39,11 @@ const FILE_TABS = [
 ];
 
 const WATCHDOG_MS = 6000;
+// Temps sense escriure abans d'actualitzar la pàgina (mode 'page').
+const LIVE_DELAY_MS = 350;
+// Amplada mínima amb què es pinta una pàgina (mode 'page'). Les comprovacions
+// dels exercicis estan pensades per a pàgines d'aquesta amplada o més.
+const MIN_PAGE_WIDTH = 340;
 const MAX_ENTRIES = 400;
 const MIN_FRAME_HEIGHT = 56;
 const MAX_FRAME_HEIGHT = 560;
@@ -37,10 +51,17 @@ const MAX_FRAME_HEIGHT = 560;
 const sameLines = (a, b) => a.length === b.length && a.every((line, index) => line === b[index]);
 
 export default function CodeRunner({
+  mode = 'code',
   js = '',
   html = '',
-  css = '',
+  css,
   data = '',
+  focus,
+  checks,
+  target,
+  boxes: initialBoxes = false,
+  viewport,
+  pageWidth,
   fileNames,
   runAt = 'ready',
   frameTitle = 'Resultat del codi',
@@ -57,16 +78,32 @@ export default function CodeRunner({
   brief,
   after,
 }) {
-  const [files, setFiles] = useState({ js, html, css, data });
-  const [tab, setTab] = useState('js');
+  const isPage = mode === 'page';
+  const hasCss = css !== undefined && css !== null;
+  const cssSource = css ?? '';
+  const firstTab = isPage ? (focus ?? (hasCss ? 'css' : 'html')) : 'js';
+
+  const [files, setFiles] = useState({ js, html, css: cssSource, data });
+  const [tab, setTab] = useState(firstTab);
   const [run, setRun] = useState(null);
   const [entries, setEntries] = useState([]);
   const [status, setStatus] = useState('idle'); // idle | running | done | timeout
   const [frameHeight, setFrameHeight] = useState(120);
   const [showHint, setShowHint] = useState(false);
   const [showSolution, setShowSolution] = useState(false);
+  // Mode 'page'
+  const [boxes, setBoxes] = useState(initialBoxes);
+  const [view, setView] = useState('mine'); // mine | target
+  const [pageTitle, setPageTitle] = useState('');
+  const [checkResults, setCheckResults] = useState(null);
+  const [targetRun, setTargetRun] = useState(null);
+  const [targetHeight, setTargetHeight] = useState(120);
 
   const frameRef = useRef(null);
+  const targetFrameRef = useRef(null);
+  const targetRunRef = useRef(null);
+  const stageRef = useRef(null);
+  const boxesRef = useRef(initialBoxes);
   const currentRunRef = useRef(null);
   const finishedRunRef = useRef(null);
   const storageRef = useRef({});
@@ -109,8 +146,11 @@ export default function CodeRunner({
     wasFullscreen.current = fullscreen;
   }, [fullscreen]);
 
-  const originals = { js, html, css, data };
-  const tabs = FILE_TABS.filter((item) => item.id === 'js' || originals[item.id].trim() !== '').map((item) => ({
+  const originals = { js, html, css: cssSource, data };
+  // Mode 'page': sempre HTML, i CSS quan l'exemple en porta (encara que sigui buit).
+  const hasTab = (id) =>
+    isPage ? id === 'html' || (id === 'css' && hasCss) : id === 'js' || originals[id].trim() !== '';
+  const tabs = FILE_TABS.filter((item) => hasTab(item.id)).map((item) => ({
     ...item,
     label: fileNames?.[item.id] ?? item.label,
   }));
@@ -121,7 +161,18 @@ export default function CodeRunner({
   useEffect(() => {
     function onMessage(event) {
       const data = event.data;
-      if (!data || data.source !== SANDBOX_SOURCE || data.runId !== currentRunRef.current) return;
+      if (!data || data.source !== SANDBOX_SOURCE) return;
+
+      // La pàgina «objectiu» només ens diu quant fa d'alt.
+      if (data.runId === targetRunRef.current) {
+        if (targetFrameRef.current && event.source !== targetFrameRef.current.contentWindow) return;
+        if (data.type === 'height' && typeof data.value === 'number') {
+          setTargetHeight(Math.min(MAX_FRAME_HEIGHT, Math.max(MIN_FRAME_HEIGHT, data.value)));
+        }
+        return;
+      }
+
+      if (data.runId !== currentRunRef.current) return;
       if (frameRef.current && event.source !== frameRef.current.contentWindow) return;
 
       if (data.type === 'entries' && Array.isArray(data.entries)) {
@@ -136,6 +187,10 @@ export default function CodeRunner({
         setFrameHeight(Math.min(MAX_FRAME_HEIGHT, Math.max(MIN_FRAME_HEIGHT, data.value)));
       } else if (data.type === 'storage' && data.data && typeof data.data === 'object') {
         storageRef.current = data.data;
+      } else if (data.type === 'title' && typeof data.value === 'string') {
+        setPageTitle(data.value);
+      } else if (data.type === 'checks' && Array.isArray(data.results)) {
+        setCheckResults(data.results);
       }
     }
 
@@ -154,7 +209,17 @@ export default function CodeRunner({
     setStatus('running');
     setRun({
       id: runId,
-      srcdoc: buildSrcdoc({ ...source, dataName: fileNames?.data, runId, runAt, storage: storageRef.current }),
+      srcdoc: buildSrcdoc({
+        ...source,
+        dataName: fileNames?.data,
+        runId,
+        runAt,
+        storage: storageRef.current,
+        mode,
+        cssName: fileNames?.css,
+        boxes: boxesRef.current,
+        checks: isPage && checks ? checks : null,
+      }),
     });
 
     // Si l'iframe no respon (per exemple, per un bucle que no hem pogut aturar), el retirem.
@@ -168,11 +233,18 @@ export default function CodeRunner({
   }
 
   function reset() {
-    const original = { js, html, css, data };
+    const original = { js, html, css: cssSource, data };
     clearTimeout(watchdogRef.current);
     storageRef.current = {};
     setFiles(original);
-    setTab('js');
+    setTab(firstTab);
+
+    if (isPage) {
+      // La pàgina es torna a pintar sola quan canvien els fitxers; si ja
+      // eren els originals, la tornem a carregar igualment.
+      if (files.html === original.html && files.css === original.css) execute(original);
+      return;
+    }
 
     if (!showEditor) {
       execute(original);
@@ -185,23 +257,105 @@ export default function CodeRunner({
   }
 
   useEffect(() => {
-    if (autoRun) execute();
+    if (autoRun && !isPage) execute();
     // Només en muntar el component.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Mode 'page': la pàgina es pinta en muntar i cada cop que es deixa
+  // d'escriure una estona. No hi ha botó «Executar».
+  const firstPaint = useRef(true);
+  useEffect(() => {
+    if (!isPage) return undefined;
+    if (firstPaint.current) {
+      firstPaint.current = false;
+      execute();
+      return undefined;
+    }
+    const timer = setTimeout(() => execute(), LIVE_DELAY_MS);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPage, files.html, files.css]);
+
+  // L'objectiu: la mateixa pàgina amb la solució posada. Es pinta una vegada.
+  const targetFiles = isPage && target ? { html: target.html ?? html, css: target.css ?? cssSource } : null;
+  useEffect(() => {
+    if (!targetFiles) return;
+    const runId = createRunId();
+    targetRunRef.current = runId;
+    setTargetRun({
+      id: runId,
+      srcdoc: buildSrcdoc({ ...targetFiles, runId, mode, cssName: fileNames?.css, boxes: boxesRef.current }),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [targetFiles?.html, targetFiles?.css]);
+
+  // Finestra simulada: una pàgina mai es pinta més estreta que `pageWidth`
+  // (o que el mínim, si no se'n diu cap). Si no hi cap, es mostra reduïda, com
+  // una captura. Així una maqueta amb capçalera i menú lateral es veu igual
+  // dins d'una targeta estreta, al mòbil o a pantalla completa, i les
+  // comprovacions dels exercicis donen el mateix resultat a tot arreu.
+  const scaled = isPage;
+  const logicalWidth = pageWidth ?? MIN_PAGE_WIDTH;
+  const [stageSize, setStageSize] = useState({ width: 0, height: 0 });
+  const hasRun = run !== null;
+  useEffect(() => {
+    if (!scaled || !hasRun || !stageRef.current || typeof ResizeObserver === 'undefined') return undefined;
+    const observer = new ResizeObserver(([entry]) => {
+      const { width, height } = entry.contentRect;
+      setStageSize((previous) => (previous.width === width && previous.height === height ? previous : { width, height }));
+    });
+    observer.observe(stageRef.current);
+    return () => observer.disconnect();
+  }, [scaled, hasRun]);
+  const scale = scaled && stageSize.width > 0 ? Math.min(1, stageSize.width / logicalWidth) : 1;
+
+  // L'estil d'una de les dues pàgines (la pròpia o l'objectiu), segons la
+  // seva alçada natural i si es mostra reduïda.
+  function frameStyle(naturalHeight) {
+    if (!hasPage) return undefined;
+    const height = viewport ?? naturalHeight;
+    if (!scaled) return fullscreen ? undefined : { height };
+    return {
+      width: scale < 1 ? logicalWidth : '100%',
+      // Ampliat, omple l'alçada disponible; si no, fa l'alçada de la finestra simulada.
+      height: fullscreen ? (stageSize.height > 0 ? stageSize.height / scale : height) : height,
+      transform: scale < 1 ? `scale(${scale})` : undefined,
+    };
+  }
+  const stageStyle =
+    scaled && !fullscreen
+      ? { height: Math.max(viewport ?? frameHeight, targetRun ? (viewport ?? targetHeight) : 0) * scale }
+      : undefined;
+
+  // Mostrar o amagar els quadrats no recarrega les pàgines: se'ls avisa.
+  function toggleBoxes() {
+    const next = !boxes;
+    boxesRef.current = next;
+    setBoxes(next);
+    for (const frame of [frameRef.current, targetFrameRef.current]) {
+      frame?.contentWindow?.postMessage({ source: HOST_SOURCE, type: 'boxes', value: next }, '*');
+    }
+  }
 
   const expectedLines = expectedOutput ? expectedOutput.map((line) => line.trim()).filter((line) => line !== '') : null;
   const hasException = entries.some((entry) => entry.level === 'exception');
   const outputMatches =
     expectedLines !== null && status === 'done' && !hasException && sameLines(consoleLines(entries), expectedLines);
 
+  // Mode 'page': l'exercici està resolt quan passen totes les comprovacions.
+  const checkList = isPage && checks && checks.length > 0 ? checks : null;
+  const checksReady = checkList !== null && checkResults !== null && checkResults.length === checkList.length;
+  const passedCount = checksReady ? checkResults.filter(Boolean).length : 0;
+  const allPassed = checksReady && passedCount === checkList.length;
+
   // Quan la sortida coincideix amb l'esperada, l'exercici es pot donar per fet.
   useEffect(() => {
-    if (outputMatches) onSolved?.();
+    if (outputMatches || allPassed) onSolved?.();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [outputMatches]);
+  }, [outputMatches, allPassed]);
 
-  const showConsole = status !== 'idle' && (!hasPage || entries.length > 0);
+  const showConsole = status !== 'idle' && (isPage ? entries.length > 0 : !hasPage || entries.length > 0);
   const emptyConsoleText =
     status === 'running'
       ? 'Executant…'
@@ -227,7 +381,7 @@ export default function CodeRunner({
 
   const toolbar = (
     <div className="runner__toolbar">
-      {showEditor ? (
+      {showEditor && !isPage ? (
         <button type="button" className="btn btn--primary runner__run" onClick={() => execute()}>
           <Icon name="play" size={16} />
           Executar
@@ -329,10 +483,17 @@ export default function CodeRunner({
                 </p>
               )}
               <div className="runner__bar-tools">
-                <p className="runner__shortcut" aria-hidden="true">
-                  <kbd>Ctrl</kbd>
-                  <kbd>↵</kbd>
-                </p>
+                {isPage ? (
+                  <p className="runner__live" aria-hidden="true">
+                    <span className="runner__live-dot" />
+                    En viu
+                  </p>
+                ) : (
+                  <p className="runner__shortcut" aria-hidden="true">
+                    <kbd>Ctrl</kbd>
+                    <kbd>↵</kbd>
+                  </p>
+                )}
                 {fullscreenButton('runner__fs runner__fs--bar')}
               </div>
             </div>
@@ -369,7 +530,21 @@ export default function CodeRunner({
             </p>
             {showSolution ? (
               <>
-                <CodeBlock code={solution} lang="js" title="Solució" />
+                {typeof solution === 'string' ? (
+                  <CodeBlock code={solution} lang="js" title="Solució" />
+                ) : (
+                  // Mode 'page': la solució són els fitxers que canvien.
+                  ['html', 'css']
+                    .filter((id) => solution[id] !== undefined)
+                    .map((id) => (
+                      <CodeBlock
+                        key={id}
+                        code={solution[id]}
+                        lang={id}
+                        title={`Solució · ${fileNames?.[id] ?? (id === 'html' ? 'HTML' : 'CSS')}`}
+                      />
+                    ))
+                )}
                 {explanation ? (
                   <div className="runner__explanation">
                     <p className="runner__explanation-title">Per què funciona</p>
@@ -381,8 +556,13 @@ export default function CodeRunner({
                     type="button"
                     className="btn btn--secondary btn--small"
                     onClick={() => {
-                      setFiles((previous) => ({ ...previous, js: solution }));
-                      setTab('js');
+                      if (typeof solution === 'string') {
+                        setFiles((previous) => ({ ...previous, js: solution }));
+                        setTab('js');
+                      } else {
+                        setFiles((previous) => ({ ...previous, ...solution }));
+                        setTab(solution.css !== undefined && hasCss ? 'css' : 'html');
+                      }
                     }}
                   >
                     Carrega la solució a l'editor
@@ -402,9 +582,9 @@ export default function CodeRunner({
           Resultat
         </p>
         {/* Senyal breu que el codi s'ha tornat a executar, encara que el resultat sigui igual */}
-        {run ? <span key={run.id} className="runner__pulse" aria-hidden="true" /> : null}
+        {run && !isPage ? <span key={run.id} className="runner__pulse" aria-hidden="true" /> : null}
 
-        {status === 'idle' ? (
+        {status === 'idle' && !isPage ? (
           <p className="runner__placeholder">Prem «Executar» per veure què fa aquest codi.</p>
         ) : null}
 
@@ -416,33 +596,107 @@ export default function CodeRunner({
         ) : null}
 
         {run ? (
-          <div className={hasPage ? 'preview' : 'preview preview--hidden'}>
+          <div className={hasPage ? `preview${isPage ? ' preview--page' : ''}` : 'preview preview--hidden'}>
             {hasPage ? (
-              <p className="preview__bar">
+              <div className="preview__bar">
                 <span className="preview__dots" aria-hidden="true" />
-                Pàgina
-              </p>
+                <span className="preview__title">{isPage && pageTitle ? pageTitle : 'Pàgina'}</span>
+                {isPage ? (
+                  <span className="preview__tools">
+                    {targetRun ? (
+                      <span className="preview__views" role="group" aria-label="Què es mostra">
+                        <button
+                          type="button"
+                          className="preview__view"
+                          aria-pressed={view === 'mine'}
+                          onClick={() => setView('mine')}
+                        >
+                          El teu resultat
+                        </button>
+                        <button
+                          type="button"
+                          className="preview__view"
+                          aria-pressed={view === 'target'}
+                          onClick={() => setView('target')}
+                        >
+                          Objectiu
+                        </button>
+                      </span>
+                    ) : null}
+                    <button type="button" className="preview__boxes" aria-pressed={boxes} onClick={toggleBoxes}>
+                      <Icon name="boxes" size={15} />
+                      Quadrats
+                    </button>
+                  </span>
+                ) : null}
+              </div>
             ) : null}
-            <iframe
-              key={run.id}
-              ref={frameRef}
-              className="preview__frame"
-              title={frameTitle}
-              sandbox={SANDBOX_PERMISSIONS}
-              srcDoc={run.srcdoc}
-              // Ampliat, l'alçada la decideix la maquetació: la pàgina omple el panell.
-              style={hasPage && !fullscreen ? { height: frameHeight } : undefined}
-              aria-hidden={hasPage ? undefined : true}
-              tabIndex={hasPage ? undefined : -1}
-            />
+            <div
+              ref={stageRef}
+              className={`preview__stage${scaled ? ' preview__stage--scaled' : ''}`}
+              style={stageStyle}
+            >
+              <iframe
+                key={run.id}
+                ref={frameRef}
+                className={`preview__frame${view === 'target' && targetRun ? ' preview__frame--behind' : ''}`}
+                title={frameTitle}
+                sandbox={SANDBOX_PERMISSIONS}
+                srcDoc={run.srcdoc}
+                // Ampliat, l'alçada la decideix la maquetació: la pàgina omple el panell.
+                style={frameStyle(frameHeight)}
+                aria-hidden={!hasPage || (view === 'target' && targetRun) ? true : undefined}
+                tabIndex={!hasPage || (view === 'target' && targetRun) ? -1 : undefined}
+              />
+              {targetRun ? (
+                <iframe
+                  key={targetRun.id}
+                  ref={targetFrameRef}
+                  className={`preview__frame${view === 'target' ? '' : ' preview__frame--behind'}`}
+                  title={`Objectiu: ${frameTitle}`}
+                  sandbox={SANDBOX_PERMISSIONS}
+                  srcDoc={targetRun.srcdoc}
+                  style={frameStyle(targetHeight)}
+                  aria-hidden={view === 'target' ? undefined : true}
+                  tabIndex={view === 'target' ? undefined : -1}
+                />
+              ) : null}
+            </div>
           </div>
         ) : null}
 
         {showConsole ? (
           <>
-            {hasPage ? <p className="runner__console-label">Consola</p> : null}
+            {hasPage ? <p className="runner__console-label">{isPage ? 'Avisos' : 'Consola'}</p> : null}
             <ConsoleOutput entries={entries} emptyText={emptyConsoleText} />
           </>
+        ) : null}
+
+        {checkList ? (
+          <div className={`checks${allPassed ? ' checks--ok' : ''}`}>
+            <p className="checks__title" role="status">
+              <Icon name={allPassed ? 'check' : 'target'} size={18} />
+              {allPassed
+                ? 'Correcte: el teu resultat supera totes les comprovacions.'
+                : checksReady
+                  ? `Comprovacions: ${passedCount} de ${checkList.length}`
+                  : 'Comprovacions'}
+            </p>
+            <ul className="checks__list">
+              {checkList.map((check, index) => {
+                const passed = checksReady && checkResults[index];
+                return (
+                  <li key={index} className={`checks__item${passed ? ' checks__item--ok' : ''}`}>
+                    <Icon name={passed ? 'check' : 'circle'} size={15} />
+                    <span>
+                      <span className="sr-only">{passed ? 'Fet: ' : 'Pendent: '}</span>
+                      <RichText text={check.label} />
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         ) : null}
 
         {expectedLines !== null && status === 'done' ? (

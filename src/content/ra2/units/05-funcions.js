@@ -1,4 +1,4 @@
-import { p, list, code, example, concept, warning, project, compare } from '../blocks.js';
+import { p, list, code, example, concept, warning, project, compare } from '../../blocks.js';
 
 export default {
   id: 'funcions',

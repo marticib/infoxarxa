@@ -1,6 +1,6 @@
 import Icon from '../ui/Icon.jsx';
-import { projectChecklist, requiredItems } from '../../content/projectChecklist.js';
-import { useProgress } from '../../state/ProgressContext.jsx';
+import { useCourse } from '../../state/CourseContext.jsx';
+import { isProjectDone, useProgress } from '../../state/ProgressContext.jsx';
 
 function CheckGroup({ title, items, checks, onChange }) {
   return (
@@ -27,6 +27,9 @@ function CheckGroup({ title, items, checks, onChange }) {
 // Llista de comprovació del projecte final. Es desa amb la resta del progrés.
 export default function ProjectChecklist() {
   const { progress, setProjectCheck } = useProgress();
+  const course = useCourse();
+  const { checklist: projectChecklist, requiredItems } = course;
+  const projectDone = isProjectDone(course, progress);
   const checks = progress.projectChecks;
   const total = requiredItems.length;
   const done = requiredItems.filter((item) => checks[item.id]).length;
@@ -48,10 +51,10 @@ export default function ProjectChecklist() {
         return <CheckGroup key={group.id} title={title} items={group.items} checks={checks} onChange={setProjectCheck} />;
       })}
 
-      <p className={`checklist__status${progress.projectDone ? ' checklist__status--done' : ''}`} role="status">
-        <Icon name={progress.projectDone ? 'star' : 'info'} size={18} />
-        {progress.projectDone
-          ? 'Projecte final completat. Enhorabona: la teva pàgina ja no és una maqueta, és una aplicació.'
+      <p className={`checklist__status${projectDone ? ' checklist__status--done' : ''}`} role="status">
+        <Icon name={projectDone ? 'star' : 'info'} size={18} />
+        {projectDone
+          ? course.projectDoneText
           : missing === 1
             ? 'Et falta 1 funcionalitat mínima per donar el projecte per completat.'
             : `Et falten ${missing} funcionalitats mínimes per donar el projecte per completat.`}

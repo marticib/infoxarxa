@@ -1,4 +1,4 @@
-import { p, list, steps, code, example, concept, warning, table, custom } from '../blocks.js';
+import { p, list, steps, code, example, concept, warning, table, custom } from '../../blocks.js';
 import {
   DATA_JS,
   DATA_JS_SAMPLE,

@@ -3,9 +3,11 @@ import Header from './Header.jsx';
 import Sidebar from './Sidebar.jsx';
 import SearchDialog from './SearchDialog.jsx';
 import ConfirmDialog from '../ui/ConfirmDialog.jsx';
-import { exercisesHref, glossaryHref, homeHref } from '../../lib/router.js';
+import { courses } from '../../lib/courses.js';
+import { courseHref, exercisesHref, glossaryHref, portalHref } from '../../lib/router.js';
 import { SEARCH_EVENT } from '../../lib/searchIndex.js';
 import { DESKTOP_QUERY } from '../ui/PageFullscreenButton.jsx';
+import { useCourse } from '../../state/CourseContext.jsx';
 import { useFullscreen } from '../../state/FullscreenContext.jsx';
 import { useProgress } from '../../state/ProgressContext.jsx';
 
@@ -18,6 +20,7 @@ const isTypingTarget = (element) =>
 // Estructura general: barra lateral + capçalera + zona de contingut.
 export default function Layout({ route, title, eyebrow, children }) {
   const { resetProgress } = useProgress();
+  const course = useCourse();
   const { page: pageFullscreen } = useFullscreen();
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -124,13 +127,24 @@ export default function Layout({ route, title, eyebrow, children }) {
         <footer className="footer">
           <div className="footer__inner">
             <p>
-              Dossier interactiu del RA2 · Introducció a JavaScript. Tot funciona al teu navegador: el progrés es desa
-              només en aquest dispositiu.
+              {course ? `Dossier interactiu del ${course.code} · ${course.subject}.` : 'Dossiers interactius del curs.'}{' '}
+              Tot funciona al teu navegador: el progrés es desa només en aquest dispositiu.
             </p>
             <nav className="footer__links" aria-label="Peu de pàgina">
-              <a href={homeHref}>Inici</a>
-              <a href={exercisesHref()}>Exercicis</a>
-              <a href={glossaryHref}>Glossari</a>
+              {course ? (
+                <>
+                  <a href={courseHref(course.id)}>Inici</a>
+                  <a href={exercisesHref(course.id)}>Exercicis</a>
+                  <a href={glossaryHref(course.id)}>Glossari</a>
+                  <a href={portalHref}>Tots els dossiers</a>
+                </>
+              ) : (
+                courses.map((item) => (
+                  <a key={item.id} href={courseHref(item.id)}>
+                    {item.code} · {item.shortTitle}
+                  </a>
+                ))
+              )}
             </nav>
           </div>
         </footer>
@@ -149,8 +163,9 @@ export default function Layout({ route, title, eyebrow, children }) {
         }}
       >
         <p>
-          S'esborraran les unitats visitades i completades, els resultats dels qüestionaris, els exercicis marcats
-          com a fets i la llista de comprovació del projecte final. Aquesta acció no es pot desfer.
+          S'esborrarà el progrés de <strong>tots els dossiers</strong>: les unitats visitades i completades, els
+          resultats dels qüestionaris, els exercicis marcats com a fets i les llistes de comprovació dels projectes
+          finals. Aquesta acció no es pot desfer.
         </p>
         <p>La preferència de mode clar o fosc es conserva.</p>
       </ConfirmDialog>

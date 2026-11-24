@@ -2,10 +2,27 @@ import { useId } from 'react';
 import CodeRunner from './CodeRunner.jsx';
 import Icon from '../ui/Icon.jsx';
 import RichText, { Paragraphs } from '../ui/RichText.jsx';
+import { useRunnerMode } from '../../state/CourseContext.jsx';
 
 // Exemple que l'alumne pot executar i modificar.
-export default function RunnableExample({ title, intro, expected, why, js, html, css, dataJs, fileNames, runAt }) {
+export default function RunnableExample({
+  title,
+  intro,
+  expected,
+  why,
+  js,
+  html,
+  css,
+  dataJs,
+  fileNames,
+  runAt,
+  focus,
+  boxes,
+  viewport,
+  width,
+}) {
   const titleId = useId();
+  const mode = useRunnerMode();
 
   // Les notes de sota de l'exemple, que també es veuen amb l'editor ampliat.
   const notes =
@@ -34,7 +51,7 @@ export default function RunnableExample({ title, intro, expected, why, js, html,
           <Icon name="play" size={15} />
         </span>
         <div className="card__heading">
-          <span className="card__tag">Exemple executable</span>
+          <span className="card__tag">{mode === 'page' ? 'Exemple en viu' : 'Exemple executable'}</span>
           <h3 id={titleId} className="card__title">
             <RichText text={title} />
           </h3>
@@ -44,15 +61,20 @@ export default function RunnableExample({ title, intro, expected, why, js, html,
       <Paragraphs text={intro} />
 
       <CodeRunner
+        mode={mode}
         js={js}
         html={html}
         css={css}
         data={dataJs}
         fileNames={fileNames}
         runAt={runAt}
+        focus={focus}
+        boxes={boxes}
+        viewport={viewport}
+        pageWidth={width}
         frameTitle={`Resultat de l'exemple: ${title}`}
         title={<RichText text={title} />}
-        kicker="Exemple executable"
+        kicker={mode === 'page' ? 'Exemple en viu' : 'Exemple executable'}
         brief={intro ? <Paragraphs text={intro} /> : null}
         after={notes}
       />

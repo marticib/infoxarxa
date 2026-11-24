@@ -1,7 +1,8 @@
 import { createContext, useContext, useEffect, useMemo, useReducer } from 'react';
 import { readJSON, writeJSON } from '../lib/storage.js';
-import { units } from '../content/index.js';
-import { requiredItems } from '../content/projectChecklist.js';
+import { courseOfUnit } from '../lib/courses.js';
+
+export { exerciseKey } from '../lib/keys.js';
 
 const STORAGE_KEY = 'progress:v1';
 
@@ -13,29 +14,30 @@ const emptyProgress = {
   visited: {}, //        { [unitId]: true }
   completed: {}, //      { [unitId]: true }
   quiz: {}, //           { [unitId]: { best, last, total, attempts } }
-  lastUnit: null, //     última unitat oberta
-  projectChecks: {}, //  { [itemId]: true } funcionalitats del projecte final
-  projectDone: false,
+  lastUnits: {}, //      { [dossier]: unitId } última unitat oberta de cada dossier
+  projectChecks: {}, //  { [itemId]: true } funcionalitats dels projectes finals
   exercises: {}, //      { ['unitat/exercici']: true } exercicis marcats com a fets
 };
 
-function isProjectDone(checks) {
-  return requiredItems.every((item) => checks[item.id]);
-}
+// Les unitats, els exercicis i les funcionalitats dels projectes tenen ids que
+// no es repeteixen entre dossiers: per això es poden desar tots junts.
 
 function loadProgress() {
   const saved = readJSON(STORAGE_KEY, null);
   if (!saved || typeof saved !== 'object') return emptyProgress;
   const isObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
-  const projectChecks = isObject(saved.projectChecks) ? saved.projectChecks : {};
+  const lastUnits = isObject(saved.lastUnits) ? { ...saved.lastUnits } : {};
+  // Abans només hi havia un dossier i es desava una sola unitat.
+  if (typeof saved.lastUnit === 'string') {
+    const owner = courseOfUnit(saved.lastUnit);
+    if (owner && !lastUnits[owner.id]) lastUnits[owner.id] = saved.lastUnit;
+  }
   return {
     visited: isObject(saved.visited) ? saved.visited : {},
     completed: isObject(saved.completed) ? saved.completed : {},
     quiz: isObject(saved.quiz) ? saved.quiz : {},
-    lastUnit: typeof saved.lastUnit === 'string' ? saved.lastUnit : null,
-    projectChecks,
-    // Es torna a calcular: la llista de funcionalitats pot haver canviat.
-    projectDone: isProjectDone(projectChecks),
+    lastUnits,
+    projectChecks: isObject(saved.projectChecks) ? saved.projectChecks : {},
     exercises: isObject(saved.exercises) ? saved.exercises : {},
   };
 }
@@ -43,11 +45,13 @@ function loadProgress() {
 function reducer(state, action) {
   switch (action.type) {
     case 'visit': {
-      if (state.visited[action.unitId] && state.lastUnit === action.unitId) return state;
+      const courseId = courseOfUnit(action.unitId)?.id;
+      if (!courseId) return state;
+      if (state.visited[action.unitId] && state.lastUnits[courseId] === action.unitId) return state;
       return {
         ...state,
         visited: { ...state.visited, [action.unitId]: true },
-        lastUnit: action.unitId,
+        lastUnits: { ...state.lastUnits, [courseId]: action.unitId },
       };
     }
 
@@ -68,8 +72,7 @@ function reducer(state, action) {
     }
 
     case 'projectCheck': {
-      const projectChecks = { ...state.projectChecks, [action.itemId]: action.checked };
-      return { ...state, projectChecks, projectDone: isProjectDone(projectChecks) };
+      return { ...state, projectChecks: { ...state.projectChecks, [action.itemId]: action.checked } };
     }
 
     case 'exercise': {
@@ -98,11 +101,8 @@ export function ProgressProvider({ children }) {
   }, [progress]);
 
   const value = useMemo(() => {
-    const completedCount = units.filter((unit) => progress.completed[unit.id]).length;
     return {
       progress,
-      completedCount,
-      totalUnits: units.length,
       markVisited: (unitId) => dispatch({ type: 'visit', unitId }),
       saveQuizResult: (unitId, score, total) => dispatch({ type: 'quiz', unitId, score, total }),
       setProjectCheck: (itemId, checked) => dispatch({ type: 'projectCheck', itemId, checked }),
@@ -127,8 +127,17 @@ export function unitStatus(progress, unitId) {
   return 'pending';
 }
 
-// Clau amb què es desa si un exercici està fet.
-export const exerciseKey = (unitId, exerciseId) => `${unitId}/${exerciseId}`;
+// Quantes unitats d'un dossier estan completades.
+export const completedIn = (course, progress) => course.units.filter((unit) => progress.completed[unit.id]).length;
+
+// El projecte final d'un dossier està fet quan totes les funcionalitats
+// obligatòries estan marcades. Es calcula cada vegada: la llista pot canviar.
+export const isProjectDone = (course, progress) =>
+  course.requiredItems.length > 0 && course.requiredItems.every((item) => progress.projectChecks[item.id]);
+
+// Quants exercicis d'un dossier estan marcats com a fets.
+export const exercisesDoneIn = (course, progress) =>
+  course.topics.reduce((sum, topic) => sum + topic.items.filter((item) => progress.exercises[item.key]).length, 0);
 
 export const STATUS_LABELS = {
   completed: 'Completada',
